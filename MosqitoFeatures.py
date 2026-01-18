@@ -13,7 +13,7 @@ from mosqito.sq_metrics import loudness_zwst_perseg
 from mosqito.sq_metrics import loudness_zwtv
 
 from mosqito.sq_metrics import sharpness_din_st
-from mosqito.sq_metrics import sharpness_din_tv 
+from mosqito.sq_metrics import sharpness_din_tv
 from mosqito.sq_metrics import sharpness_din_freq
 from mosqito.sq_metrics import sharpness_din_perseg
 from mosqito.sq_metrics import sharpness_din_from_loudness
@@ -53,7 +53,6 @@ from mosqito.utils import load
 print(mosqito.__version__)
 
 
-
 # hay que definir una clase en la que defina todos los métodos:
 
 
@@ -62,7 +61,7 @@ class MosqitoFeatures:
         self.signal = signal
         self.fs = fs
 
-# FUNCION PARA DIVIDIR POR TRAMAS 
+    # FUNCION PARA DIVIDIR POR TRAMAS
     def frame_analysis(self, feature_name, frame_duration=0.1):
         """Análisis por tramas para características básicas"""
         frame_len = int(frame_duration * self.fs)
@@ -93,7 +92,7 @@ class MosqitoFeatures:
                 value = np.sum(np.abs(np.diff(np.sign(frame)))) / frame_len
 
             elif feature_name == "energy":
-                value = np.sum(frame ** 2) / frame_len
+                value = np.sum(frame**2) / frame_len
 
             elif feature_name == "kurtosis":
                 value = kurtosis(frame)
@@ -101,12 +100,11 @@ class MosqitoFeatures:
             else:
                 raise ValueError(f"Característica desconocida: {feature_name}")
 
-
             features.append(value)
             times.append(start / self.fs)
 
         return np.array(times), np.array(features)
-    
+
     # Loudness
     def get_loudness_ecma(self):
         """Cálculo de Loudness ECMA"""
@@ -128,7 +126,7 @@ class MosqitoFeatures:
         """Cálculo de Loudness Time-varying (ISO 532-1:2017)"""
         return loudness_zwtv(self.signal, self.fs)
 
-     # Sharpness
+    # Sharpness
     def get_sharpness_din_st(self):
         return sharpness_din_st(self.signal, self.fs)
 
@@ -189,10 +187,7 @@ class MosqitoFeatures:
 
     def get_sii_ansi_level(self):
         return sii_ansi_level(self.signal, self.fs)
-    
-    
-    
-    
+
         # Conversión y utilidades varias
 
     def get_amp2db(self):
@@ -215,7 +210,7 @@ class MosqitoFeatures:
         """Conversión de espectro a dBA"""
         spectrum, _ = comp_spectrum(self.signal, self.fs)
         return spectrum2dBA(spectrum)
-    
+
     def get_noct_spectrum(self):
         """Cálculo del espectro de bandas de tercio de octava (nocturnal spectrum)"""
         return noct_spectrum(self.signal, self.fs)
@@ -225,43 +220,6 @@ class MosqitoFeatures:
         spectrum, _ = noct_spectrum(self.signal, self.fs)
         return noct_synthesis(spectrum, self.fs)
 
-
-    # Generadores de señal
-
-    def generate_sine_wave(self, freq=1000, duration=1.0, rms=0.1):
-        """Generador de onda seno"""
-        return sine_wave_generator(freq, self.fs, duration, rms)
-
-    def generate_am_sine(self, carrier=1000, modulator=20, duration=1.0, rms=0.1):
-        """Generador de onda seno AM"""
-        return am_sine_generator(carrier, modulator, self.fs, duration, rms)
-
-    def generate_am_noise(self, mod_freq=4, duration=1.0, rms=0.1):
-        """Generador de ruido AM"""
-        return am_noise_generator(mod_freq, self.fs, duration, rms)
-
-    def generate_fm_sine(self, carrier=1000, modulator=20, duration=1.0, rms=0.1):
-        """Generador de onda seno FM"""
-        return fm_sine_generator(carrier, modulator, self.fs, duration, rms)
-
-    # Segmentación temporal
-
-    def get_time_segmentation(self, seg_size=1024, overlap=0):
-        """Segmentación temporal de la señal"""
-        return time_segmentation(self.signal, self.fs, seg_size, overlap)
-
-    # Carga de archivos
-
-    def load_signal(self, file_path):
-        """Carga de señal desde archivo"""
-        self.signal, self.fs = load(file_path)
-
-    # Umbral de audición (LTQ)
-
-    def get_ltq(self):
-        """Retorno del umbral de audición LTQ"""
-        return LTQ
-   
     # Generadores de señal
 
     def generate_sine_wave(self, freq=1000, duration=1.0, rms=0.1):
@@ -298,4 +256,38 @@ class MosqitoFeatures:
         """Retorno del umbral de audición LTQ"""
         return LTQ
 
-  
+    # Generadores de señal
+
+    def generate_sine_wave(self, freq=1000, duration=1.0, rms=0.1):
+        """Generador de onda seno"""
+        return sine_wave_generator(freq, self.fs, duration, rms)
+
+    def generate_am_sine(self, carrier=1000, modulator=20, duration=1.0, rms=0.1):
+        """Generador de onda seno AM"""
+        return am_sine_generator(carrier, modulator, self.fs, duration, rms)
+
+    def generate_am_noise(self, mod_freq=4, duration=1.0, rms=0.1):
+        """Generador de ruido AM"""
+        return am_noise_generator(mod_freq, self.fs, duration, rms)
+
+    def generate_fm_sine(self, carrier=1000, modulator=20, duration=1.0, rms=0.1):
+        """Generador de onda seno FM"""
+        return fm_sine_generator(carrier, modulator, self.fs, duration, rms)
+
+    # Segmentación temporal
+
+    def get_time_segmentation(self, seg_size=1024, overlap=0):
+        """Segmentación temporal de la señal"""
+        return time_segmentation(self.signal, self.fs, seg_size, overlap)
+
+    # Carga de archivos
+
+    def load_signal(self, file_path):
+        """Carga de señal desde archivo"""
+        self.signal, self.fs = load(file_path)
+
+    # Umbral de audición (LTQ)
+
+    def get_ltq(self):
+        """Retorno del umbral de audición LTQ"""
+        return LTQ

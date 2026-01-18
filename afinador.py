@@ -19,9 +19,9 @@ import time
 # ___________________________configuracion___________________________
 SAMPLE_FREQ = 44100
 WINDOW_SIZE = 44100
-WINDOW_STEP = 21050
-NUM_HPS = 5
-POWER_THRESH = 1e-6
+WINDOW_STEP = 44100
+NUM_HPS = 3
+POWER_THRESH = 1e-4
 CONCERT_PITCH = 440
 # se calcula con una nota de referencia, como La a 440 Hz
 # https://www.chciken.com/digital/signal/processing/2020/05/13/guitar-tuner.html
@@ -32,11 +32,13 @@ OCTAVE_BANDS = [50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600]
 
 ALL_NOTES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
 
-audio_file = "audio/MIS_AUDIOS/Notas con pua, electrica.m4a"
+audio_file = "C:\\Users\\lucib\\Desktop\\TFG\\audio\\MIS_AUDIOS\\notas_uña_española.wav"
 # ____________________________________________________________________
 
 
 def find_closest_note(pitch):
+    if pitch <= 0:
+        return "...", 0
     i = int(np.round(np.log2(pitch / CONCERT_PITCH) * 12))
     closest_note = ALL_NOTES[i % 12] + str(4 + (i + 9) // 12)
     closest_pitch = CONCERT_PITCH * 2 ** (i / 12)
@@ -47,8 +49,7 @@ def process_window(window_samples):
     # skip if signal power is too low
     signal_power = (np.linalg.norm(window_samples, ord=2) ** 2) / len(window_samples)
     if signal_power < POWER_THRESH:
-        print("Closest note: ...")
-        return
+        return None
 
     # avoid spectral leakage
     hann_samples = window_samples * HANN_WINDOW
@@ -59,27 +60,13 @@ def process_window(window_samples):
     for i in range(int(62 / DELTA_FREQ)):
         magnitude_spec[i] = 0
 
-    # suppress low energy frequencies per octave band
-    for j in range(len(OCTAVE_BANDS) - 1):
-        ind_start = int(OCTAVE_BANDS[j] / DELTA_FREQ)
-        ind_end = int(OCTAVE_BANDS[j + 1] / DELTA_FREQ)
-        ind_end = min(ind_end, len(magnitude_spec))
-        avg_energy_per_freq = (
-            np.linalg.norm(magnitude_spec[ind_start:ind_end], ord=2) ** 2
-            / (ind_end - ind_start)
-        ) ** 0.5
-        for i in range(ind_start, ind_end):
-            if magnitude_spec[i] < WHITE_NOISE_THRESH * avg_energy_per_freq:
-                magnitude_spec[i] = 0
-
-    # interpolate spectrum
+    # interpolate spectrum, algorithm HPS
     mag_spec_ipol = np.interp(
         np.arange(0, len(magnitude_spec), 1 / NUM_HPS),
         np.arange(0, len(magnitude_spec)),
         magnitude_spec,
     )
     mag_spec_ipol = mag_spec_ipol / np.linalg.norm(mag_spec_ipol, ord=2)
-
     hps_spec = copy.deepcopy(mag_spec_ipol)
 
     # calculate HPS
@@ -95,33 +82,44 @@ def process_window(window_samples):
     max_ind = np.argmax(hps_spec)
     max_freq = max_ind * (SAMPLE_FREQ / WINDOW_SIZE) / NUM_HPS
 
+    # FILTRO DE RANGO: Ignorar frecuencias fuera de una guitarra real (70Hz - 1000Hz)
+    if max_freq < 70 or max_freq > 1000:
+        return None
+
     closest_note, closest_pitch = find_closest_note(max_freq)
     max_freq = round(max_freq, 1)
     closest_pitch = round(closest_pitch, 1)
 
-    print(f"Closest note: {closest_note} {max_freq}/{closest_pitch}")
+    return closest_note, max_freq, closest_pitch
 
 
 def main():
     if not os.path.isfile(audio_file):
         print(f"Audio file {audio_file} not found!")
         return
-    data = sf.read(audio_file)
+
+    data, fs = sf.read(audio_file)
     if len(data.shape) > 1:
         data = data[:, 0]  # tomar solo un canal si es stereo
+    global SAMPLE_FREQ
+    SAMPLE_FREQ = fs  # sincronizar con la frecuencia real del archivo
 
-    window_samples = np.zeros(WINDOW_SIZE)
+    last_note = ""
 
-    for start in range(0, len(data), WINDOW_STEP):
-        end = start + WINDOW_STEP
-        window_samples = np.roll(window_samples, -WINDOW_STEP)
-        window_samples[-WINDOW_STEP:] = (
-            data[start:end]
-            if end <= len(data)
-            else np.pad(data[start:], (0, WINDOW_STEP - (len(data) - start)))
-        )
-        process_window(window_samples)
-        time.sleep(0.1)
+    for start in range(0, len(data) - WINDOW_SIZE, WINDOW_STEP):
+        window = data[start : start + WINDOW_SIZE]
+        result = process_window(window)
+
+        if result:
+            note, freq, pitch = result
+            # FILTRO DE ESTABILIDAD: Solo imprimir si la nota cambia
+            if note != last_note:
+                print(f"Closest note: {note} Freq: {str(freq)}/{pitch} Hz")
+
+                last_note = note
+        else:
+            # Si hay silencio, permitimos que se vuelva a detectar la misma nota después
+            last_note = ""
 
 
 if __name__ == "__main__":
