@@ -8,17 +8,18 @@ import numpy as np
 import librosa
 import os
 
-# def load_audio(path):
-#     y, fs = sf.read(path)
 
-#     # Si el audio es estereo, convertir a mono
-#     if y.ndim > 1:
-#         y = y.mean(axis=1)
+def load_audio(path):
+    y, fs = sf.read(path)
 
-#     if y.dtype != np.float32:
-#         y = y / np.max(np.abs(y))  # normalizar
+    # Si el audio es estereo, convertir a mono
+    if y.ndim > 1:
+        y = y.mean(axis=1)
 
-#     return y, fs
+    if y.dtype != np.float32:
+        y = y / np.max(np.abs(y))  # normalizar
+
+    return y, fs
 
 
 def load_audio_package(folder_path):
@@ -369,14 +370,15 @@ def extract_mosqito_features(y, fs):
 
 
 def main():
-    audio_path = "audio/doviso"
-    y, fs, info = load_audio_package(audio_path)
+    audio_path = f"C:/Users/lucib/Desktop/TFG/audio/MIS_AUDIOS/notas_pua_electrica.wav"
+    y, fs = load_audio(audio_path)
 
-    print("Metadatos del archivo:", info)
-    # aplicar calibración
-    if "nivel" in info:
-        escala = 10 ** (info["nivel"] / 20)
-        y = y * escala
+    # y, fs, info = load_audio_package(audio_path)
+    # print("Metadatos del archivo:", info)
+    # # aplicar calibración
+    # if "nivel" in info:
+    #     escala = 10 ** (info["nivel"] / 20)
+    #     y = y * escala
 
     adsr = ADSR_curve(y, fs)
     plot_adsr(adsr)
