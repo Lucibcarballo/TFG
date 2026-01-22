@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # __________________________configuración__________________________
-ruta_csv = r"C:\Users\lucib\Desktop\TFG\audio\MIS_AUDIOS\dataset_final.csv"
+ruta_csv = r"C:\Users\lucib\Desktop\TFG\audio\MIS_AUDIOS\dataset.csv"
 
 
 def cargar_dataset(ruta_csv):
