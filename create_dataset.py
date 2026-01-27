@@ -6,6 +6,8 @@ import os
 import librosa
 from scipy.signal import get_window, resample_poly, spectrogram, find_peaks
 import mosqito as mq
+import seaborn as sns
+
 
 # funciones sacadas de caracteristicas_audio.py adaptadas para este script
 
@@ -182,10 +184,149 @@ def extract_mosqito_features_values(y, fs):
     return resultados
 
 
+def generate_table(df, output_latex):  # genera tabla para copiar y pegar en latex
+    columns_display = [
+        "filename",
+        "clase",
+        "loudness",
+        "sharpness",
+        "roughness",
+        "brillantez",
+        "inharmonicity",
+    ]
+    table = df[columns_display].copy()
+
+    table["filename"] = (
+        table["filename"].astype(str).str.replace("_", "\\_", regex=False)
+    )  # para que latex no interprete _ como subíndice
+
+    columns_names = {
+        "filename": "Archivo",
+        "clase": "Clase",
+        "loudness": "Loudness",
+        "sharpness": "Sharpness",
+        "roughness": "Roughness",
+        "brillantez": "Brillantez",
+        "inharmonicity": "Inarmonicidad",
+    }
+    table.rename(columns=columns_names, inplace=True)
+
+    num_columns = len(table.columns)
+    column_format = "l" + "c" * (
+        num_columns - 1
+    )  # primera columna izq, resto centradas
+
+    latex_code = table.to_latex(
+        index=False,
+        float_format="%.3f",
+        caption="Características extraídas.",
+        label="tab:mis_datos",
+        column_format=column_format,
+        position="htbp",
+    )
+
+    # guardamos en el archivo
+    with open(output_latex, "w", encoding="utf-8") as f:
+        f.write(latex_code)  # esto es lo que tenemos que copiar y pegar en el latex
+
+    print(f"Tabla para LaTeX generada en: {output_latex}")
+
+
+def visualizar_todo(
+    output_csv,
+):  # nos permite visualizar gráficos del dataset generado como .csv
+
+    if not os.path.exists(output_csv):
+        print(f"No se encuentra el archivo: {output_csv}")
+        return
+
+    df = pd.read_csv(output_csv)
+
+    # columnas que nos interesan (excluyendo nombre de archivo y clase)
+    cols_interes = [
+        "loudness",
+        "sharpness",
+        "roughness",
+        "tnr",
+        "brillantez",
+        "inharmonicity",
+        "attack_time",
+        "decay_time",
+        "sustain_time",
+    ]
+
+    cols_reales = [c for c in cols_interes if c in df.columns]
+
+    sns.set_theme(style="whitegrid")  # configuración estética
+
+    # _____________________Boxlplots_________________________
+
+    n_cols = 3
+    n_rows = (len(cols_reales) + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 4 * n_rows))
+    axes = axes.flatten()
+
+    for i, col in enumerate(cols_reales):
+        # El gráfico mágico: x=Clase, y=Característica
+        sns.boxplot(data=df, x="clase", y=col, ax=axes[i], palette="Set2")
+        axes[i].set_title(f"Distribución de {col}", fontweight="bold")
+        axes[i].set_xlabel("")
+        axes[i].set_ylabel("Valor")
+
+    # Borrar ejes vacios si sobran
+    for i in range(len(cols_reales), len(axes)):
+        fig.delaxes(axes[i])
+
+    plt.tight_layout()
+    plt.savefig("comparacion_boxplots.png", dpi=300)
+    print("[INFO] Guardado: comparacion_boxplots.png")
+    plt.show()
+
+    # ___________________PAIRPLOT (Relaciones entre variables)_____________________
+
+    cols_pairplot = [
+        "clase",
+        "loudness",
+        "sharpness",
+        "roughness",
+        "tnr",
+        "brillantez",
+        "inharmonicity",
+        "attack_time",
+        "decay_time",
+        "sustain_time",
+    ]
+    cols_pairplot = [c for c in cols_pairplot if c in df.columns]
+
+    pair_plot = sns.pairplot(
+        df[cols_pairplot], hue="clase", palette="Set1", diag_kind="kde"
+    )
+    pair_plot.fig.suptitle("Relación entre variables (Scatter Matrix)", y=1.02)
+
+    pair_plot.savefig("relaciones_pairplot.png", dpi=300)
+    print("[INFO] Guardado: relaciones_pairplot.png")
+    plt.show()
+
+    # ______________________MATRIZ DE CORRELACIÓN_________________________
+    plt.figure(figsize=(10, 8))
+
+    # Calculamos correlación solo de numéricas
+    corr = df[cols_reales].corr()
+
+    sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+    plt.title("Matriz de Correlación entre Características")
+
+    plt.tight_layout()
+    plt.savefig("matriz_correlacion.png", dpi=300)
+    print("[INFO] Guardado: matriz_correlacion.png")
+    plt.show()
+
+
 def main():
-    # Rutas
     input_folder = "C:/Users/lucib/Desktop/TFG/audio/MIS_AUDIOS/notas_separadas/"
     output_csv = "C:/Users/lucib/Desktop/TFG/audio/MIS_AUDIOS/dataset_final.csv"
+    output_latex = "C:/Users/lucib/Desktop/TFG/audio/MIS_AUDIOS/tabla_resultados.tex"
 
     if not os.path.exists(input_folder):
         print("No existe la carpeta de notas separadas.")
@@ -249,16 +390,31 @@ def main():
         dataset.append(fila)
         print(f"[{i+1}/{len(archivos)}] Procesado: {archivo}")
 
-    # _______________________________Guardar
+    # Guardar CSV y generar LaTeX
     df = pd.DataFrame(dataset)
     df.to_csv(output_csv, index=False)
 
-    print("\n" + "=" * 30)
-    print("Dataset Generado con Éxito")
-    print(df.head())
-    print(f"Guardado en: {output_csv}")
+    print("\nGenerando tabla para LaTeX...")
+    generate_table(df, output_latex)
 
-    print(f"Tamaño total del dataset: {len(df)}")
+    print("\n" + "=" * 30)
+    print("¡Listo!")
+    print(f"1. Datos completos en: {output_csv}")
+    print(f"2. Tabla visual para TFG en: {output_latex}")
+    print("=" * 30)
+
+    visualizar_todo(output_csv)
+
+    # # _______________________________Guardar dataset csv_______________________________
+    # df = pd.DataFrame(dataset)
+    # df.to_csv(output_csv, index=False)
+
+    # print("\n" + "=" * 30)
+    # print("Dataset Generado con Éxito")
+    # print(df.head())
+    # print(f"Guardado en: {output_csv}")
+
+    # print(f"Tamaño total del dataset: {len(df)}")
 
 
 if __name__ == "__main__":
