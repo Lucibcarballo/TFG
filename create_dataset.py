@@ -185,16 +185,8 @@ def extract_mosqito_features_values(y, fs):
 
 
 def generate_table(df, output_latex):  # genera tabla para copiar y pegar en latex
-    columns_display = [
-        "filename",
-        "clase",
-        "loudness",
-        "sharpness",
-        "roughness",
-        "brillantez",
-        "inharmonicity",
-    ]
-    table = df[columns_display].copy()
+
+    table = df.copy()
 
     table["filename"] = (
         table["filename"].astype(str).str.replace("_", "\\_", regex=False)
@@ -203,33 +195,82 @@ def generate_table(df, output_latex):  # genera tabla para copiar y pegar en lat
     columns_names = {
         "filename": "Archivo",
         "clase": "Clase",
+        "attack_time": "Ataque(s)",
+        "decay_time": "Decay(s)",
+        "sustain_time": "Sustain(s)",
+        "energy_total": "Energia",
         "loudness": "Loudness",
         "sharpness": "Sharpness",
         "roughness": "Roughness",
+        "tnr": "TNR",
         "brillantez": "Brillantez",
         "inharmonicity": "Inarmonicidad",
+        "indice_low_mid": "LowMid",
     }
     table.rename(columns=columns_names, inplace=True)
 
-    num_columns = len(table.columns)
+    # dividimos en dos tablas porque si no no entra
+
+    # ______________TABLA 1 (dominio temporal)_________________
+
+    cols_tabla_1 = [
+        "Archivo",
+        "Clase",
+        "Attack(s)",
+        "Decay(s)",
+        "Sustain(s)",
+    ]
+
+    cols_1_reales = [c for c in cols_tabla_1 if c in table.columns]
+
+    table1 = table[cols_1_reales]
+
     column_format = "l" + "c" * (
-        num_columns - 1
+        len(table.columns) - 1
     )  # primera columna izq, resto centradas
 
-    latex_code = table.to_latex(
+    latex1 = table1.to_latex(
         index=False,
         float_format="%.3f",
-        caption="Características extraídas.",
-        label="tab:mis_datos",
+        longtable=True,
+        caption="Características extraídas en el dominio temporal.",
+        label="tab:dom_temporal",
         column_format=column_format,
-        position="htbp",
     )
 
-    # guardamos en el archivo
-    with open(output_latex, "w", encoding="utf-8") as f:
-        f.write(latex_code)  # esto es lo que tenemos que copiar y pegar en el latex
+    # ______________TABLA 2 (dominio espectral)_________________
 
-    print(f"Tabla para LaTeX generada en: {output_latex}")
+    cols_tabla_2 = [
+        "Archivo",
+        "Clase",
+        "Energía",
+        "Loud.",
+        "Sharp.",
+        "Inarm.",
+        "Brillo",
+        "Rough.",
+    ]
+    cols_2_reales = [c for c in cols_tabla_2 if c in table.columns]
+
+    table2 = table[cols_2_reales]
+
+    latex2 = table2.to_latex(
+        index=False,
+        float_format="%.3f",
+        longtable=True,
+        caption="Características Espectrales.",
+        label="tab:espectral_full",
+        column_format="l" + "c" * (len(table2.columns) - 1),
+        position=None,
+    )
+
+    # guardamos en el archivo (luego hay que copiar y pegar en el latex)
+    with open(output_latex, "w", encoding="utf-8") as f:
+        f.write("% TABLA 1: TIEMPOS \n")
+        f.write(latex1)
+        f.write("% TABLA 2: ESPECTRO \n")
+        f.write(latex2)
+    print(f"Tablas COMPLETAS generadas en: {output_latex}")
 
 
 def visualize(
@@ -394,13 +435,11 @@ def main():
     df = pd.DataFrame(dataset)
     df.to_csv(output_csv, index=False)
 
-    print("\nGenerando tabla para LaTeX...")
     generate_table(df, output_latex)
 
     print("\n" + "=" * 30)
-    print("¡Listo!")
-    print(f"1. Datos completos en: {output_csv}")
-    print(f"2. Tabla visual para TFG en: {output_latex}")
+    print(f"Dataset csv guardado en: {output_csv}")
+    print(f"Tabla para LaTeX guardada en: {output_latex}")
     print("=" * 30)
 
     # visualize(output_csv)
