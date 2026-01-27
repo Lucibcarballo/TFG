@@ -232,7 +232,7 @@ def generate_table(df, output_latex):  # genera tabla para copiar y pegar en lat
     print(f"Tabla para LaTeX generada en: {output_latex}")
 
 
-def visualizar_todo(
+def visualize(
     output_csv,
 ):  # nos permite visualizar gráficos del dataset generado como .csv
 
@@ -403,7 +403,7 @@ def main():
     print(f"2. Tabla visual para TFG en: {output_latex}")
     print("=" * 30)
 
-    visualizar_todo(output_csv)
+    # visualize(output_csv)
 
     # # _______________________________Guardar dataset csv_______________________________
     # df = pd.DataFrame(dataset)
