@@ -184,93 +184,98 @@ def extract_mosqito_features_values(y, fs):
     return resultados
 
 
-def generate_table(df, output_latex):  # genera tabla para copiar y pegar en latex
+def procesar_subtabla(df_completo, columnas_originales, caption, label):
 
-    table = df.copy()
-
-    table["filename"] = (
-        table["filename"].astype(str).str.replace("_", "\\_", regex=False)
-    )  # para que latex no interprete _ como subíndice
-
-    columns_names = {
+    # nombre original csv : nombre para LaTeX
+    mapa_nombres = {
         "filename": "Archivo",
         "clase": "Clase",
-        "attack_time": "Ataque(s)",
+        "attack_time": "Attack(s)",
         "decay_time": "Decay(s)",
         "sustain_time": "Sustain(s)",
-        "energy_total": "Energia",
-        "loudness": "Loudness",
-        "sharpness": "Sharpness",
-        "roughness": "Roughness",
+        "energy_total": "Energía",
+        "loudness": "Loud.",
+        "sharpness": "Sharp.",
+        "roughness": "Rough.",
         "tnr": "TNR",
-        "brillantez": "Brillantez",
-        "inharmonicity": "Inarmonicidad",
-        "indice_low_mid": "LowMid",
+        "brillantez": "Brillo",
+        "inharmonicity": "Inarm.",
+        "indice_low_mid": "Low-Mid",
     }
-    table.rename(columns=columns_names, inplace=True)
 
-    # dividimos en dos tablas porque si no no entra
+    # filtramos solo las columnas que existen
+    cols_reales = [c for c in columnas_originales if c in df_completo.columns]
+    sub_df = df_completo[cols_reales].copy()
 
-    # ______________TABLA 1 (dominio temporal)_________________
+    # para poner guiones bajos en latex sin errores
+    if "filename" in sub_df.columns:
+        sub_df["filename"] = (
+            sub_df["filename"].astype(str).str.replace("_", "\\_", regex=False)
+        )
 
-    cols_tabla_1 = [
-        "Archivo",
-        "Clase",
-        "Attack(s)",
-        "Decay(s)",
-        "Sustain(s)",
-    ]
+    sub_df.rename(columns=mapa_nombres, inplace=True)
 
-    cols_1_reales = [c for c in cols_tabla_1 if c in table.columns]
+    col_format = "l" + "c" * (len(sub_df.columns) - 1)
 
-    table1 = table[cols_1_reales]
-
-    column_format = "l" + "c" * (
-        len(table.columns) - 1
-    )  # primera columna izq, resto centradas
-
-    latex1 = table1.to_latex(
+    # generamos LaTeX
+    return sub_df.to_latex(
         index=False,
         float_format="%.3f",
         longtable=True,
-        caption="Características extraídas en el dominio temporal.",
-        label="tab:dom_temporal",
-        column_format=column_format,
-    )
-
-    # ______________TABLA 2 (dominio espectral)_________________
-
-    cols_tabla_2 = [
-        "Archivo",
-        "Clase",
-        "Energía",
-        "Loud.",
-        "Sharp.",
-        "Inarm.",
-        "Brillo",
-        "Rough.",
-    ]
-    cols_2_reales = [c for c in cols_tabla_2 if c in table.columns]
-
-    table2 = table[cols_2_reales]
-
-    latex2 = table2.to_latex(
-        index=False,
-        float_format="%.3f",
-        longtable=True,
-        caption="Características Espectrales.",
-        label="tab:espectral_full",
-        column_format="l" + "c" * (len(table2.columns) - 1),
+        caption=caption,
+        label=label,
+        column_format=col_format,
         position=None,
     )
 
-    # guardamos en el archivo (luego hay que copiar y pegar en el latex)
+
+def generate_table(df, output_latex):
+
+    # columnas de cada tabla (nombres originales del CSV)
+    cols_orig_tabla_1 = [
+        "filename",
+        "clase",
+        "attack_time",
+        "decay_time",
+        "sustain_time",
+    ]
+    cols_orig_tabla_2 = [
+        "filename",
+        "clase",
+        "energy_total",
+        "loudness",
+        "sharpness",
+        "inharmonicity",
+        "brillantez",
+        "roughness",
+        "tnr",
+    ]
+
+    # creamos 2 tablas LaTeX
+    latex_1 = procesar_subtabla(
+        df,
+        cols_orig_tabla_1,
+        "Características Temporales.",
+        "tab:temporal_table",
+    )
+
+    latex_2 = procesar_subtabla(
+        df,
+        cols_orig_tabla_2,
+        "Características Espectrales.",
+        "tab:espectral_table",
+    )
+
+    # Guardamos todo en el archivo .tex, del que copiaremos y pegaremos en el informe
     with open(output_latex, "w", encoding="utf-8") as f:
-        f.write("% TABLA 1: TIEMPOS \n")
-        f.write(latex1)
-        f.write("% TABLA 2: ESPECTRO \n")
-        f.write(latex2)
-    print(f"Tablas COMPLETAS generadas en: {output_latex}")
+
+        f.write("% ---------- TABLA 1: Cracterísticas temporales ---------- \n")
+        f.write(latex_1)
+        f.write("\n\n\\newpage \n\n")
+        f.write("% ---------- TABLA 2: Características espectrales ---------- \n")
+        f.write(latex_2)
+
+    print(f"[OK] Tablas generadas correctamente en: {output_latex}")
 
 
 def visualize(
@@ -431,7 +436,7 @@ def main():
         dataset.append(fila)
         print(f"[{i+1}/{len(archivos)}] Procesado: {archivo}")
 
-    # Guardar CSV y generar LaTeX
+    # Guardar CSV y generar latex
     df = pd.DataFrame(dataset)
     df.to_csv(output_csv, index=False)
 
@@ -439,7 +444,7 @@ def main():
 
     print("\n" + "=" * 30)
     print(f"Dataset csv guardado en: {output_csv}")
-    print(f"Tabla para LaTeX guardada en: {output_latex}")
+    print(f"Tabla para LateX guardada en: {output_latex}")
     print("=" * 30)
 
     # visualize(output_csv)
