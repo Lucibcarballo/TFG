@@ -9,56 +9,22 @@ import librosa
 import os
 
 
-def load_audio(path):
+def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
     y, fs = sf.read(path)
 
     # Si el audio es estereo, convertir a mono
     if y.ndim > 1:
         y = y.mean(axis=1)
 
-    if y.dtype != np.float32:
+    if level_db is not None:  # calibrar
+        gain = 10 ** (level_db / 20)
+        y = y * gain
+        print(f"Audio calibrado a {level_db} dB.")
+    elif y.dtype != np.float32:
         y = y / np.max(np.abs(y))  # normalizar
+        print("Audio normalizado.")
 
     return y, fs
-
-
-def load_audio_package(folder_path):
-    folder_path = os.path.abspath(folder_path)
-
-    # Buscar wav con "c12" en el nombre
-    wav_c12 = None
-    for f in os.listdir(folder_path):
-        if f.lower().endswith(".wav") and "c12" in f.lower():
-            wav_c12 = os.path.join(folder_path, f)
-            break
-    if wav_c12 is None:
-        raise FileNotFoundError(
-            "No se encontró ningún .wav que contenga 'c12' en el nombre."
-        )
-
-    # Buscar info.txt
-    info_path = os.path.join(folder_path, "info.yaml")
-    if not os.path.exists(info_path):
-        raise FileNotFoundError("No se encontró 'info.yaml' en la carpeta.")
-
-    # Leer el WAV
-    audio, fs = sf.read(wav_c12)
-
-    # Leer info.txt
-    info = {}
-    with open(info_path, "r") as f:
-        for line in f:
-            if ":" in line:
-                key, value = line.strip().split(":", 1)
-                key = key.strip().lower()
-                value = value.strip()
-                try:
-                    value = float(value)
-                except:
-                    pass
-                info[key] = value
-
-    return audio, fs, info
 
 
 def ADSR_curve(y, fs, n_fft=2048, hop_length=256):
@@ -67,29 +33,26 @@ def ADSR_curve(y, fs, n_fft=2048, hop_length=256):
     S = np.abs(
         librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
     )  # stft: short fourier transform
-    env = np.max(S, axis=0)  # máximo por frame
+    env = np.max(S, axis=0)  # máximo por muestra
     env = env / np.max(env)  # normalizar
 
-    # Encontrar índices aproximados de ADSR
+    # calculo de tiempos en segundos
+    times = np.arange(len(env)) * hop_length / fs
+
+    # INDICES DE ADSR
     # ataque: tiempo hasta alcanzar 90% de la amplitud máxima
     attack_idx = np.argmax(env >= 0.9)
 
     # decay: tiempo hasta el nivel de sustain (ej. 50%)
     decay_idx = attack_idx + np.argmax(env[attack_idx:] <= 0.5)
 
-    # sustain: período hasta que comienza la caída final
+    # sustain: periodo hasta que comienza la caida final
     sustain_idx = decay_idx + np.argmax(env[decay_idx:] <= 0.5)  # ejemplo simplificado
 
-    # release: desde el final del sustain hasta que env≈0
+    # release: desde el final del sustain hasta que env cerca de 0
     release_idx = len(env) - 1  # asumimos que termina al final del clip
 
-    # Convertir frames a tiempo
-    times = np.arange(len(env)) * hop_length / fs
-    attack_time = times[attack_idx]
-    decay_time = times[decay_idx]
-    sustain_time = times[sustain_idx]
-    release_time = times[release_idx]
-
+    # devolvemos diccionario con resultados
     return {
         "env": env,
         "times": times,
@@ -142,275 +105,283 @@ def compute_FFT(y, fs):
     return freqs, mag
 
 
-def compute_spectrogram(y, fs, nperseg=1024, noverlap=512):
+def plot_fft(freqs, mag):
+    plt.figure(figsize=(10, 6))
+    plt.semilogy(freqs, mag)
+    plt.xlabel("Frecuencia [Hz]")
+    plt.ylabel("Energía (log)")
+    plt.title("Energía vs Frecuencia")
+    plt.grid(True)
+    plt.show()
+
+
+def compute_spectrogram_data(y, fs, nperseg=1024, noverlap=512):
     f, t, Sxx = spectrogram(y, fs=fs, window="hann", nperseg=nperseg, noverlap=noverlap)
 
-    energy_pulse = np.sum(
-        Sxx, axis=0
-    )  # suma energía en todas las frecuencias para cada instante
+    # pulso de energía temporal
+    energy_pulse = np.sum(Sxx, axis=0)
+    energy_db_time = 10 * np.log10(energy_pulse + 1e-10)
 
-    eps = 1e-10  # para evitar log(0)
-    energy_db = 10 * np.log10(energy_pulse + eps)
-
-    plt.figure(figsize=(10, 4))
-    plt.plot(t, energy_db, color="purple")
-    plt.xlabel("Tiempo [s]")
-    plt.ylabel("Energía total [dB]")
-    plt.title("Pulso temporal de energía (suma de todas las frecuencias)")
-    plt.grid(True)
-    plt.show()
-
-    # Promedio por filas (energía promedio de cada frecuencia)
+    # promedio espectral para picos
     avg_spectrum = np.mean(Sxx, axis=1)
-    avg_db = 10 * np.log10(avg_spectrum + 1e-10)
+    avg_db_freq = 10 * np.log10(avg_spectrum + 1e-10)
 
     peaks, _ = find_peaks(
-        avg_db,
-        prominence=2,  # pico debe sobresalir al menos 3 dB del entorno
-        height=np.max(avg_db) - 40,  # evita picos pequeños
-        distance=10,  # evita picos pegados
+        avg_db_freq,
+        prominence=2,
+        height=np.max(avg_db_freq) - 40,
+        distance=10,
     )
 
+    return {
+        "f": f,
+        "t": t,
+        "Sxx": Sxx,
+        "energy_db_time": energy_db_time,
+        "avg_db_freq": avg_db_freq,
+        "peaks": peaks,
+    }
+
+
+def plot_spectrogram_analysis(spec_data):
+    # grafico pulso temporal
     plt.figure(figsize=(10, 4))
-    plt.plot(f, avg_db, color="blue")
-    plt.plot(
-        f[peaks], avg_db[peaks], "ro", markersize=5
-    )  # puntos rojos para marcar armonicos
-    plt.xlabel("Frecuencia [Hz]")
-    plt.ylabel("Energía promedio [dB]")
-    plt.title("Promedio espectral (sobre tiempo) → armónicos")
+    plt.plot(spec_data["t"], spec_data["energy_db_time"], color="purple")
+    plt.title("Pulso temporal de energía")
+    plt.xlabel("Tiempo [s]")
     plt.grid(True)
     plt.show()
 
-    print("\nFrecuencias de los picos detectados:")
-    for fp in f[peaks]:
-        print(f" {fp:.2f} Hz")
+    # grafico picos espectrales
+    plt.figure(figsize=(10, 4))
+    plt.plot(spec_data["f"], spec_data["avg_db_freq"], color="blue")
+    peaks = spec_data["peaks"]
+    plt.plot(spec_data["f"][peaks], spec_data["avg_db_freq"][peaks], "ro", markersize=5)
+    plt.title("Promedio espectral y armónicos")
+    plt.xlabel("Frecuencia [Hz]")
+    plt.grid(True)
+    plt.show()
 
-    return f, t, Sxx, peaks
+    print("Frecuencias pico detectadas:", spec_data["f"][peaks])
 
 
-import numpy as np
-
-
-def compute_inharmonicity(
-    peaks, f
-):  # la inarmonicidad (B) describe cuánto se desvían los armónicos reales de un sonido respecto de los armónicos ideales
+def compute_inharmonicity(peaks, f):
+    # la inarmonicidad (B) describe cuánto se desvían los armónicos reales de un sonido respecto de los armónicos ideales
 
     fp = f[peaks]  # frecuencias de los picos
-    Num = len(fp)  # número de armónicos que consideramos
+    Num = len(fp)  # num de armónicos que consideramos
+    if Num < 2:
+        return 0.0  # Si no hay suficientes armónicos, devolvemos 0
+
     Fundamental = fp[0]  # asumimos el primer pico como fundamental
     armonicos = np.arange(1, Num + 1)
 
-    B = ((fp[:Num] / (armonicos * Fundamental)) ** 2 - 1) / (armonicos**2)
-    print("Inarmonicidad:", B)
+    # Coeficiente B para cada armónico
+    B_vals = ((fp[:Num] / (armonicos * Fundamental)) ** 2 - 1) / (armonicos**2)
 
-    return B
+    # devolvemos la media (un solo número)
+    return np.mean(np.abs(B_vals))
 
 
-def subband_energy(y, fs, N, freqs, mag):
+def compute_subband_data(y, fs, freqs, mag):
+    # energia espectral
     f_min, f_max = freqs.min(), freqs.max()
-    cutoffs = np.linspace(
-        f_min, f_max, N + 1
-    )  # N bandas → N+1 puntos (incluye extremos)
+    cutoffs = np.linspace(f_min, f_max, 4)  # 3 bandas = 4 cortes
+    # N bandas: N+1 puntos (incluye extremos)
 
     # integrar energía en cada banda
     band_energies = []
-    for i in range(N):
+    for i in range(3):
         band_mask = (freqs >= cutoffs[i]) & (freqs < cutoffs[i + 1])
-        band_energy = np.sum(mag[band_mask])
-        band_energies.append(band_energy)
+        band_energies.append(np.sum(mag[band_mask]))
 
-    # visualizacion de bandas de frecuencia
-    plt.figure(figsize=(10, 6))
-    plt.plot(freqs, mag)
-    for c in cutoffs:
-        plt.axvline(c, color="r", linestyle="--", alpha=0.5)
-    plt.xlabel("Frecuencia (Hz)")
-    plt.ylabel("Energía promedio")
-    plt.title("División en bandas de frecuencia")
-    plt.show()
-
-    # ________________________________________________Pulso de energía por subbanda
-    frame_len = int(0.05 * fs)  # 50 ms
-    hop = int(0.025 * fs)  # 25 ms solapamiento
+    # energía temporal por banda (para Plot)
+    frame_len = int(0.05 * fs)
+    hop = int(0.025 * fs)
     window = get_window("hann", frame_len)
-
-    bands = {"graves": (20, 200), "medios": (200, 2000), "agudos": (2000, fs / 2 - 100)}
+    bands_def = {
+        "graves": (20, 200),
+        "medios": (200, 2000),
+        "agudos": (2000, fs / 2 - 100),
+    }
 
     n_frames = int((len(y) - frame_len) / hop) + 1
-    subband_energy = {name: np.zeros(n_frames) for name in bands}
+    temporal_energy = {name: np.zeros(n_frames) for name in bands_def}
 
-    for i in range(n_frames):
-        frame = y[i * hop : i * hop + frame_len] * window
-        fft_vals = np.fft.rfft(frame)
-        freqs = np.fft.rfftfreq(frame_len, 1 / fs)
-        mag2 = np.abs(fft_vals) ** 2  # energía
+    if n_frames > 0:
+        freqs_frame = np.fft.rfftfreq(frame_len, 1 / fs)
+        for i in range(n_frames):
+            frame = y[i * hop : i * hop + frame_len] * window
+            mag2 = np.abs(np.fft.rfft(frame)) ** 2
 
-        for name, (f_low, f_high) in bands.items():
-            mask = (freqs >= f_low) & (freqs < f_high)
-            subband_energy[name][i] = np.sum(mag2[mask])
+            for name, (f_low, f_high) in bands_def.items():
+                mask = (freqs_frame >= f_low) & (freqs_frame < f_high)
+                temporal_energy[name][i] = np.sum(mag2[mask])
 
     t_frames = np.arange(n_frames) * hop / fs
 
+    return {
+        "band_energies": band_energies,  # [Low, Mid, High]
+        "cutoffs": cutoffs,
+        "temporal_energy": temporal_energy,
+        "t_frames": t_frames,
+    }
+
+
+def plot_subband_analysis(sub_data, freqs, mag):
+    # division espectral
     plt.figure(figsize=(10, 6))
+    plt.plot(freqs, mag)
+    for c in sub_data["cutoffs"]:
+        plt.axvline(c, color="r", linestyle="--")
+    plt.title("División en bandas de frecuencia")
+    plt.show()
 
-    for i, (name, energy) in enumerate(subband_energy.items(), 1):
-        plt.subplot(len(subband_energy), 1, i)
-        energy_norm = energy / np.max(energy)  # opcional para normalizar entre 0-1
-        plt.plot(t_frames, energy_norm, color="C" + str(i))
+    # Evolucion temporal
+    plt.figure(figsize=(10, 6))
+    for i, (name, energy) in enumerate(sub_data["temporal_energy"].items(), 1):
+        plt.subplot(3, 1, i)
+        plt.plot(sub_data["t_frames"], energy / (np.max(energy) + 1e-10), color=f"C{i}")
         plt.title(f"Subbanda {name}")
-        plt.ylabel("Energía normalizada")
         plt.grid(True)
-
-    plt.xlabel("Tiempo [s]")
     plt.tight_layout()
     plt.show()
 
-    return band_energies
 
+def compute_mosqito_data(y, fs):
+    # Resample a 48kHz para Mosqito
+    y_48 = resample_poly(y, 48000, fs) if fs != 48000 else y
+    fs_mq = 48000
 
-def mosqito_features(y, fs):
-    mf = MosqitoFeatures(y, fs)
+    results = {}
 
-    features_frame = {
-        "centroid": mf.frame_analysis("centroid"),
-        "zcr": mf.frame_analysis("zcr"),
-        "energy": mf.frame_analysis("energy"),
-        "kurtosis": mf.frame_analysis("kurtosis"),
+    # Loudness
+    N, N_spec, bark_axis = mq.loudness_zwst(y_48, fs_mq)
+    results["loudness"] = {"val": N, "spec": N_spec, "bark": bark_axis}
+
+    # Sharpness
+    S = mq.sharpness_din_from_loudness(N, N_spec)
+    # Sharpness temporal
+    S_tv, t_tv = mq.sharpness_din_tv(y_48, fs_mq, skip=0.1)
+    results["sharpness"] = {"val": S, "tv": S_tv, "time": t_tv}
+
+    # Roughness
+    R, R_spec, bark_r, time_r = mq.roughness_dw(y_48, fs_mq, overlap=0)
+    results["roughness"] = {"val": np.mean(R), "spec": R_spec, "bark": bark_r}
+
+    # Tonality (TNR y PR)
+    t_tnr, tnr, _, tones_freqs_tnr = mq.tnr_ecma_st(y_48, fs_mq)
+    t_pr, pr, _, tones_freqs_pr = mq.pr_ecma_st(y_48, fs_mq)
+
+    results["tonality"] = {
+        "tnr_global": np.nanmean(t_tnr),
+        "tnr_spec": tnr,
+        "tnr_freqs": tones_freqs_tnr,
+        "pr_global": np.nanmean(t_pr),
+        "pr_spec": pr,
+        "pr_freqs": tones_freqs_pr,
     }
 
-    return features_frame
+    return results
 
 
-def extract_mosqito_features(y, fs):
-    # _______________________________________________Extraer caracteristicas del audio completo y representarlas
-
-    features_frame = mosqito_features(y, fs)
-
-    # LOUDNESS
-    plt.figure(figsize=(10, 6))
-    N, N_spec, bark_axis = mq.loudness_zwst(y, fs)
-    print("Loudness:", N)
-    plt.plot(bark_axis, N_spec)
-    plt.xlabel("Frequency band [Bark]")
-    plt.ylabel("Specific loudness [Sone/Bark]")
-    plt.title("Loudness = " + f"{N:.2f}" + " [Sone]")
-
-    # SHARPNESS
-    S = mq.sharpness_din_from_loudness(N, N_spec)  # S en [acum]
-    print("Sharpness (from loudness):", S)
-
-    y_48k = resample_poly(y, 48000, fs)  # hay que muestrear a 48k para que lo acepte
-
-    S_tv, t_tv = mq.sharpness_din_tv(
-        y_48k, 48000, skip=0.1
-    )  # saltamos los primeros 0.1 s para evitar el efecto transitorio inicial
+def plot_mosqito_analysis(mq_data):
+    # Loudness
+    d = mq_data["loudness"]
     plt.figure()
-    plt.plot(t_tv, S_tv)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Sharpness [acum]")
-    plt.title("Sharpness across time")
-    plt.grid(True)
-
-    # ROUGHNESS
-    R, R_specific, bark, time = mq.roughness_dw(y, fs, overlap=0)
-    plt.figure()
-    plt.plot(bark, R_specific)
-    plt.xlabel("Bark axis [Bark]")
-    plt.ylabel("Specific roughness [Asper/Bark]")
-    plt.title("Roughness = " + f"{R[0]:.2f}" + " [Asper]")
-
-    # TONALITY
-    spectrum_db, freq_axis = mq.comp_spectrum(y, fs, db=True)
-    t_pr, pr, prom, tones_freqs = mq.pr_ecma_st(y, fs)  # prominence ratio
-    plt.figure()
-    plt.bar(tones_freqs, pr, width=50)
-    plt.grid(axis="y")
-    plt.ylabel("PR [dB]")
-    # plt.title("Total PR = "+ f"{t_pr[0]:.2f}" + " dB")
-    plt.title("Total PR")
-    print("Valor PR (en dB):", t_pr)
-    plt.xscale("log")
-    xticks_pos = list(tones_freqs) + [100, 1000, 10000]
-    xticks_pos = np.sort(xticks_pos)
-    xticks_label = [str(elem) for elem in xticks_pos]
-    plt.xticks(xticks_pos, labels=xticks_label, rotation=30)
-    plt.xlabel("Frequency [Hz]")
-
-    t_tnr, tnr, prom, tones_freqs = mq.tnr_ecma_st(y, fs)  #  tone-to-noise ratio
-    plt.figure()
-    plt.bar(tones_freqs, tnr, width=50)
-    plt.grid(axis="y")
-    plt.ylabel("TNR [dB]")
-    # plt.title("Total TNR = "+ f"{t_tnr[0]:.2f}" + " dB")
-    plt.title("Total TNR")
-    print("Valor TNR (en dB):", t_tnr)
-    plt.xscale("log")
-    xticks_pos = list(tones_freqs) + [100, 1000, 10000]
-    xticks_pos = np.sort(xticks_pos)
-    xticks_label = [str(elem) for elem in xticks_pos]
-    plt.xticks(xticks_pos, labels=xticks_label, rotation=30)
-    plt.xlabel("Frequency [Hz]")
-
-    #### estas características salen a 0 si hay uniformidad de la señal
-
-    # _______________________________________________Calculo promedio de cada característica
-    features_mean = {
-        name: np.nanmean(values)
-        for name, (
-            t,
-            values,
-        ) in features_frame.items()  # hacemos nanmean en vez de mean porque asi ignora los valores nan, si no kurtosis devuelve nan
-    }
-
-    # Muestra valores en terminal
-    print("Valores promedio del audio:")
-    for name, val in features_mean.items():
-        print(f"{name.capitalize():<10}: {val:.4f}")
-
-
-def main():
-    audio_path = f"C:/Users/lucib/Desktop/TFG/audio/MIS_AUDIOS/notas_pua_electrica.wav"
-    y, fs = load_audio(audio_path)
-
-    # y, fs, info = load_audio_package(audio_path)
-    # print("Metadatos del archivo:", info)
-    # # aplicar calibración
-    # if "nivel" in info:
-    #     escala = 10 ** (info["nivel"] / 20)
-    #     y = y * escala
-
-    adsr = ADSR_curve(y, fs)
-    plot_adsr(adsr)
-
-    freqs, mag = compute_FFT(y, fs)
-
-    # _____________________________________________Representar energia vs frecuencia
-
-    plt.figure(figsize=(10, 6))
-    plt.semilogy(freqs, mag)  # escala logaritmica
-    plt.xlabel("Frecuencia [Hz]")
-    plt.ylabel("Energía (escala log)")
-    plt.title("Energía en función de la frecuencia")
-    plt.grid(True)
+    plt.plot(d["bark"], d["spec"])
+    plt.title(f"Loudness Spectrum (N={d['val']:.2f} sone)")
+    plt.xlabel("Bark")
     plt.show()
 
-    f, t, Sxx, peaks = compute_spectrogram(y, fs)
-    B = compute_inharmonicity(peaks, f)
+    # Sharpness Time
+    d = mq_data["sharpness"]
+    plt.figure()
+    plt.plot(d["time"], d["tv"])
+    plt.title("Sharpness vs Time")
+    plt.show()
 
-    N = 3  # bandas de frecuencia
-    band_energies = subband_energy(y, fs, N, freqs, mag)
-
-    brillantez = band_energies[2] / band_energies[1]  # indice brillantez
-    print(f"Indice de brillantez: {brillantez:.4f}")
-
-    IL = band_energies[0] / band_energies[1]  # indice de bajos a medios
-    print(f"Indice de bajos a medios: {IL:.4f}")
-
-    extract_mosqito_features(y, fs)
-
-    print("Fin del programa.")
+    # Roughness
+    d = mq_data["roughness"]
+    plt.figure()
+    plt.plot(d["bark"], d["spec"])
+    plt.title(f"Roughness Spectrum (R={d['val']:.2f} asper)")
+    plt.show()
 
 
-if __name__ == "__main__":
-    main()
+def get_summary_values(
+    y, fs
+):  # devuelve un diccionario con valores numéricos para el CSV
+
+    # curva ADSR
+    adsr = ADSR_curve(y, fs)
+
+    # caract espectrales
+    freqs, mag = compute_FFT(y, fs)
+    spec = compute_spectrogram_data(y, fs)
+    inharm = compute_inharmonicity(spec["peaks"], spec["f"])
+
+    # brillantez
+    sub = compute_subband_data(y, fs, freqs, mag)
+    e = sub["band_energies"]
+    brillo = e[2] / (e[1] + 1e-10)
+    low_mid = e[0] / (e[1] + 1e-10)
+
+    # mosqito
+    mq_data = compute_mosqito_data(y, fs)
+
+    return {
+        "attack_time": adsr["attack_time"],
+        "decay_time": adsr["decay_time"],
+        "sustain_time": adsr["sustain_time"],
+        "inharmonicity": inharm,
+        "brillantez": brillo,
+        "low_mid_ratio": low_mid,
+        "loudness": mq_data["loudness"]["val"],
+        "sharpness": mq_data["sharpness"]["val"],
+        "roughness": mq_data["roughness"]["val"],
+        "tnr": mq_data["tonality"]["tnr_global"],
+        "pr": mq_data["tonality"]["pr_global"],
+    }
+
+
+def generate_table(df, output_filename):  # genera tabla LaTeX
+    try:
+        # Redondeamos decimales
+        latex_code = df.round(3).to_latex(
+            index=False, caption=f"Datos de {output_filename}"
+        )
+        with open(output_filename, "w", encoding="utf-8") as f:
+            f.write(latex_code)
+        print(f"Tabla LaTeX guardada en {output_filename}")
+    except Exception as e:
+        print(f"Error generando tabla LaTeX: {e}")
+
+
+def generate_table(df, output_filename, landscape=False):  # para tabla latex
+
+    try:
+        latex_code = df.to_latex(
+            index=False,
+            float_format="%.3f",  # Redondear a 3 decimales
+            caption=f"Datos de {output_filename}",
+            escape=False,
+        )
+
+        latex_code = latex_code.replace(
+            "\\begin{tabular}", "\\resizebox{\\linewidth}{!}{%\n\\begin{tabular}"
+        )
+        latex_code = latex_code.replace("\\end{tabular}", "\\end{tabular}%\n}")
+
+        # opción de girar la hoja (Landscape)
+        if landscape:
+            latex_code = "\\begin{landscape}\n" + latex_code + "\n\\end{landscape}"
+
+        # guardar archivo
+        with open(output_filename, "w", encoding="utf-8") as f:
+            f.write(latex_code)
+
+        print(f"Tabla LaTeX guardada en {output_filename} (Landscape={landscape})")
+
+    except Exception as e:
+        print(f"Error generando tabla LaTeX: {e}")
