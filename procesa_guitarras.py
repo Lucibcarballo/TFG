@@ -77,8 +77,12 @@ def main():
 
     print(f"\n Resultados en {output_csv} y {output_latex}")
 
-    print("\n--- Generando Gráficos ---")
+    print("\n--- Generando gráficos ---")
     caracteristicas_audio.generate_comparative_graphs(df)
+
+    caracteristicas_audio.generate_3d_pca_graph(df, filename="grafico_3d.png")
+
+    print("\nProceso finalizado.")
 
 
 if __name__ == "__main__":

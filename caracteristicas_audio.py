@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import soundfile as sf
 from scipy.signal import get_window, resample_poly, spectrogram, find_peaks
@@ -8,6 +9,9 @@ import librosa
 import seaborn as sns
 from math import pi
 import re  # Necesario para detectar patrones de texto
+from mpl_toolkits.mplot3d import Axes3D  # Necesario para proyecciones 3D
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 
 def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
@@ -461,9 +465,14 @@ def generate_comparative_graphs(
         )
         ax.fill(angles, valores, color=color, alpha=0.1)
 
-    plt.title("Radar Chart de Características Promedio por Clase", y=1.08)
+    plt.title("Radar Chart de características promedio por clase", y=1.08)
     plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+
+    plt.savefig("radar_chart.png", dpi=300, bbox_inches="tight")
+    print("Guardado: radar_chart.png")
+
     plt.show()
+    plt.close()
 
     # _____________________BARRAS AGRUPADAS_______________________
     print("Generando gráfico de barras...")
@@ -499,4 +508,87 @@ def generate_comparative_graphs(
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", title="Características")
     plt.tight_layout()
     plt.grid(axis="x", alpha=0.3)
+
+    plt.savefig("grafico_barras.png", dpi=300, bbox_inches="tight")
+    print("Guardado: grafico_barras.png")
+
     plt.show()
+    plt.close()
+
+
+def generate_3d_pca_graph(
+    df, filename="grafico_3d_pca.png"
+):  # para visualizar la separación entre pua, uña, yema
+    # utilizamos PCA para reducir dimensionalidad a 3D y graficar
+
+    print("Generando análisis PCA en 3D...")
+
+    def detectar_tecnica(nombre_archivo):
+        nombre = nombre_archivo.lower()
+        if "pua" in nombre:
+            return "Púa"
+        if "uña" in nombre:
+            return "Uña"
+        if "yema" in nombre:
+            return "Yema"
+        return "Otra"
+
+    df_pca = df.copy()
+    df_pca["Tecnica"] = df_pca["Archivo"].apply(detectar_tecnica)
+
+    # Filtrar solo las técnicas de interés
+    df_pca = df_pca[df_pca["Tecnica"].isin(["Púa", "Uña", "Yema"])].copy()
+
+    if df_pca.empty:
+        print("Error: No hay datos suficientes de Púa/Uña/Yema.")
+        return
+
+    cols_features = df_pca.select_dtypes(include=[np.number]).columns.tolist()
+    X = df_pca[cols_features].values
+
+    X_scaled = StandardScaler().fit_transform(
+        X
+    )  # misma escala para todas las características
+
+    pca = PCA(n_components=3)  # para reducir a 3 dimensiones
+    componentes_principales = pca.fit_transform(X_scaled)
+
+    df_plot = pd.DataFrame(data=componentes_principales, columns=["PC1", "PC2", "PC3"])
+    df_plot["Tecnica"] = df_pca["Tecnica"].values  # Recuperamos las etiquetas
+
+    varianza = pca.explained_variance_ratio_
+    print(
+        f"Varianza explicada: PC1={varianza[0]:.2f}, PC2={varianza[1]:.2f}, PC3={varianza[2]:.2f}"
+    )
+    print(f"Total información retenida: {sum(varianza)*100:.1f}%")
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection="3d")
+
+    colores_tecnica = {"Púa": "#e74c3c", "Uña": "#3498db", "Yema": "#2ecc71"}
+
+    for tecnica, grupo in df_plot.groupby("Tecnica"):
+        ax.scatter(
+            grupo["PC1"],
+            grupo["PC2"],
+            grupo["PC3"],
+            c=colores_tecnica.get(tecnica, "gray"),
+            label=tecnica,
+            s=60,
+            alpha=0.8,
+            edgecolor="k",
+            linewidth=0.5,
+        )
+
+    ax.set_xlabel(f"PC1 ({varianza[0]*100:.0f}%)")
+    ax.set_ylabel(f"PC2 ({varianza[1]*100:.0f}%)")
+    ax.set_zlabel(f"PC3 ({varianza[2]*100:.0f}%)")
+    ax.set_title("Clusterización de Técnicas mediante PCA", fontsize=14)
+    ax.legend(title="Técnica")
+
+    ax.view_init(elev=30, azim=135)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Gráfico PCA guardado en: {filename}")
+    plt.close()
