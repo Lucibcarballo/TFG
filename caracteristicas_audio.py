@@ -2,11 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import soundfile as sf
 from scipy.signal import get_window, resample_poly, spectrogram, find_peaks
-from MosqitoFeatures import MosqitoFeatures
 import mosqito as mq
 import numpy as np
 import librosa
-import os
+import seaborn as sns
+from math import pi
+import re  # Necesario para detectar patrones de texto
 
 
 def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
@@ -385,3 +386,117 @@ def generate_table(df, output_filename, landscape=False):  # para tabla latex
 
     except Exception as e:
         print(f"Error generando tabla LaTeX: {e}")
+
+
+def limpiar_nombre(nombre):
+    # Regex: Busca guiones + "nota" + guiones + digitos al final
+    # Ej: "pua-electrica-nota-1" -> "pua-electrica"
+    # Ej: "guitarra_05" -> "guitarra"
+    return re.sub(r"[-_]?(nota)?[-_]?\d+$", "", nombre, flags=re.IGNORECASE)
+
+
+def generate_comparative_graphs(
+    df,
+):  # recibe el dataframe con las características de todas las notas y genera gráficos comparativos entre clases
+
+    sns.set_style("whitegrid")
+    plt.rcParams.update({"font.size": 10})
+
+    # Creamos una columna temporal 'Grupo' con el nombre limpio
+    df["Grupo"] = df["Archivo"].apply(limpiar_nombre)
+
+    # Identificamos columnas numéricas
+    cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
+
+    # calculamos la media de todas las notas que tengan el mismo nombre de Grupo
+    # Mantenemos 'Clase' (ej: electrica vs española)
+    df_agrupado = df.groupby(["Grupo", "Clase"])[cols_numericas].mean().reset_index()
+
+    print(
+        f"Audios agrupados: de {len(df)} archivos originales a {len(df_agrupado)} grupos promedio."
+    )
+
+    # NORMALIZACIÓN para representación gráfica (0-1 por característica)
+    df_norm = df_agrupado.copy()
+    for col in cols_numericas:
+        max_val = df_norm[col].max()
+        min_val = df_norm[col].min()
+        if max_val != min_val:
+            df_norm[col] = (df_norm[col] - min_val) / (max_val - min_val)
+        else:
+            df_norm[col] = 0.0
+
+    # Configuración de colores
+    clases_unicas = df_norm["Clase"].unique()
+    paleta = sns.color_palette("bright", len(clases_unicas))
+    mapa_colores = dict(zip(clases_unicas, paleta))
+
+    # _______________________RADAR CHART_______________________
+    print("Generando Radar Chart...")
+    df_radar = df_norm.groupby("Clase")[cols_numericas].mean().reset_index()
+
+    categorias = cols_numericas
+    N = len(categorias)
+    angles = [n / float(N) * 2 * pi for n in range(N)]
+    angles += angles[:1]
+
+    plt.figure(figsize=(8, 8))
+    ax = plt.subplot(111, polar=True)
+    ax.set_theta_offset(pi / 2)
+    ax.set_theta_direction(-1)
+    plt.xticks(angles[:-1], categorias)
+
+    for i, row in df_radar.iterrows():
+        valores = row[cols_numericas].values.flatten().tolist()
+        valores += valores[:1]
+        nombre_clase = row["Clase"]
+        color = mapa_colores.get(nombre_clase, "black")
+        ax.plot(
+            angles,
+            valores,
+            linewidth=2,
+            linestyle="solid",
+            label=nombre_clase,
+            color=color,
+        )
+        ax.fill(angles, valores, color=color, alpha=0.1)
+
+    plt.title("Radar Chart de Características Promedio por Clase", y=1.08)
+    plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+    plt.show()
+
+    # _____________________BARRAS AGRUPADAS_______________________
+    print("Generando gráfico de barras...")
+
+    # Usamos df_norm que ya tiene los grupos (pua-electrica, uña-electrica, etc.)
+    df_melt = df_norm.melt(
+        id_vars=["Grupo", "Clase"],
+        value_vars=cols_numericas,
+        var_name="Característica",
+        value_name="Valor Normalizado",
+    )
+
+    # Ordenar para que salgan agrupados visualmente por clase
+    df_melt.sort_values(by=["Clase", "Grupo"], inplace=True)
+
+    num_grupos = len(df_norm["Grupo"].unique())
+    altura_figura = max(5, num_grupos * 0.8)
+
+    plt.figure(figsize=(12, altura_figura))
+
+    sns.barplot(
+        data=df_melt,
+        y="Grupo",
+        x="Valor Normalizado",
+        hue="Característica",
+        palette="tab10",
+        orient="h",
+    )
+
+    plt.title("Características promedio por grupos")
+    plt.xlabel("Magnitud normalizada")
+    plt.ylabel("Grupo")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", title="Características")
+    plt.tight_layout()
+    plt.grid(axis="x", alpha=0.3)
+    plt.show()

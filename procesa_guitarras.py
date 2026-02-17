@@ -75,7 +75,10 @@ def main():
     # Generar Tablas LaTeX
     caracteristicas_audio.generate_table(df, output_latex)
 
-    print(f"\nProceso finalizado. Resultados en {output_csv} y {output_latex}")
+    print(f"\n Resultados en {output_csv} y {output_latex}")
+
+    print("\n--- Generando Gráficos ---")
+    caracteristicas_audio.generate_comparative_graphs(df)
 
 
 if __name__ == "__main__":
