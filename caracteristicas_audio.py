@@ -592,3 +592,117 @@ def generate_3d_pca_graph(
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Gráfico PCA guardado en: {filename}")
     plt.close()
+
+
+def generate_pca_per_string(df, filename="guitarras_pca_cuerdas.png"):
+
+    print("Generando PCA 3D por número de cuerda...")
+
+    # Función para extraer el número de cuerda del nombre
+    def detectar_cuerda(nombre_archivo):
+        import re
+
+        match = re.search(r"nota[-_]?(\d+)", nombre_archivo, re.IGNORECASE)
+        if match:
+            return int(
+                match.group(1)
+            )  # Devolvemos como ENTERO para que ordene bien (1, 2, 3...)
+        return None
+
+    df_pca = df.copy()
+    df_pca["Cuerda"] = df_pca["Archivo"].apply(detectar_cuerda)
+
+    # Eliminamos archivos donde no se detectó número
+    df_pca = df_pca.dropna(subset=["Cuerda"])
+    df_pca = df_pca.sort_values(by="Cuerda")
+
+    cols_features = df_pca.select_dtypes(include=[np.number]).columns.tolist()
+    # Quitamos la columna 'Cuerda' si se coló como numérica
+    if "Cuerda" in cols_features:
+        cols_features.remove("Cuerda")
+
+    X = df_pca[cols_features].values
+    X_scaled = StandardScaler().fit_transform(X)
+
+    pca = PCA(n_components=3)
+    componentes = pca.fit_transform(X_scaled)
+
+    df_pca[["PC1", "PC2", "PC3"]] = componentes
+    varianza = pca.explained_variance_ratio_
+
+    fig = plt.figure(figsize=(12, 10))
+    ax = fig.add_subplot(111, projection="3d")
+
+    # para ver la transición de agudos (1) a graves (6)
+    cuerdas_unicas = sorted(df_pca["Cuerda"].unique())
+    cmap = plt.get_cmap("plasma", len(cuerdas_unicas))
+
+    for i, cuerda in enumerate(cuerdas_unicas):
+        grupo = df_pca[df_pca["Cuerda"] == cuerda]
+        ax.scatter(
+            grupo["PC1"],
+            grupo["PC2"],
+            grupo["PC3"],
+            color=cmap(i),
+            label=f"Cuerda {cuerda}",
+            s=80,
+            alpha=0.8,
+            edgecolor="k",
+            linewidth=0.5,
+        )
+
+    # Etiquetas
+    ax.set_xlabel(f"PC1 ({varianza[0]*100:.1f}%)")
+    ax.set_ylabel(f"PC2 ({varianza[1]*100:.1f}%)")
+    ax.set_zlabel(f"PC3 ({varianza[2]*100:.1f}%)")
+    ax.set_title("Distribución de características por cuerda (Frecuencia)", fontsize=14)
+
+    # Leyenda
+    ax.legend(title="Nº Cuerda", loc="upper left", bbox_to_anchor=(1.05, 1))
+
+    ax.view_init(elev=30, azim=120)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Guardado: {filename}")
+    plt.close()
+
+
+def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
+    print("Generando Matriz de Correlación...")
+
+    cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
+
+    if (
+        "Cuerda" in cols_numericas
+    ):  # eliminamos columnas que no aporten informacion numerica relevante
+        cols_numericas.remove("Cuerda")
+
+    # Calculamos la matriz de correlación de Pearson
+    corr = df[cols_numericas].corr()
+
+    plt.figure(figsize=(10, 8))
+
+    # Dibujamos el mapa de calor
+    sns.heatmap(
+        corr,
+        mask=mask,
+        cmap="coolwarm",
+        vmax=1,
+        vmin=-1,
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.7},
+        annot=True,
+        fmt=".2f",
+    )
+
+    plt.title("Matriz de correlación de parámetros acústicos", size=15, pad=20)
+    plt.xticks(rotation=45, ha="right")
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Guardado: {filename}")
+    plt.close()

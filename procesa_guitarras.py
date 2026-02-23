@@ -81,6 +81,13 @@ def main():
     caracteristicas_audio.generate_comparative_graphs(df)
 
     caracteristicas_audio.generate_3d_pca_graph(df, filename="grafico_3d.png")
+    caracteristicas_audio.generate_pca_per_string(
+        df, filename="guitarras_pca_cuerdas.png"
+    )
+
+    caracteristicas_audio.generate_correlation_matrix(
+        df, filename="correlation_matrix.png"
+    )
 
     print("\nProceso finalizado.")
 
