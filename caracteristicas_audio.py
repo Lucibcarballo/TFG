@@ -98,7 +98,6 @@ def plot_adsr(adsr):
     plt.title("Curva ADSR")
     plt.legend()
     plt.grid(True)
-    plt.show()
 
 
 def compute_FFT(y, fs):
@@ -423,10 +422,9 @@ def generate_comparative_graphs(
     # NORMALIZACIÓN para representación gráfica (0-1 por característica)
     df_norm = df_agrupado.copy()
     for col in cols_numericas:
-        max_val = df_norm[col].max()
-        min_val = df_norm[col].min()
-        if max_val != min_val:
-            df_norm[col] = (df_norm[col] - min_val) / (max_val - min_val)
+        max_val = df_norm[col].abs().max()  # abs por si hubiera valores negativos
+        if max_val != 0:
+            df_norm[col] = df_norm[col] / max_val
         else:
             df_norm[col] = 0.0
 
@@ -470,8 +468,6 @@ def generate_comparative_graphs(
 
     plt.savefig("radar_chart.png", dpi=300, bbox_inches="tight")
     print("Guardado: radar_chart.png")
-
-    plt.show()
     plt.close()
 
     # _____________________BARRAS AGRUPADAS_______________________
@@ -512,7 +508,6 @@ def generate_comparative_graphs(
     plt.savefig("grafico_barras.png", dpi=300, bbox_inches="tight")
     print("Guardado: grafico_barras.png")
 
-    plt.show()
     plt.close()
 
 
@@ -686,7 +681,6 @@ def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
     # Dibujamos el mapa de calor
     sns.heatmap(
         corr,
-        mask=mask,
         cmap="coolwarm",
         vmax=1,
         vmin=-1,
@@ -702,6 +696,63 @@ def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
     plt.tight_layout()
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Guardado: {filename}")
+    plt.close()
+
+
+def generate_small_multiples_bars(df, filename="graficos_small_multiples.png"):
+    print("Generando gráfico de barras (Small Multiples)...")
+
+    cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
+
+    # eliminamos columnas que no aporten informacion numerica
+    if "Cuerda" in cols_numericas:
+        cols_numericas.remove("Cuerda")
+
+    if "Grupo" in cols_numericas:
+        cols_numericas.remove("Grupo")
+        df["Grupo"] = df["Archivo"].apply(limpiar_nombre)
+
+    df_agrupado = df.groupby(["Grupo", "Clase"])[cols_numericas].mean().reset_index()
+
+    df_norm = df_agrupado.copy()
+    for col in cols_numericas:
+        max_val = df_norm[col].max()
+        min_val = df_norm[col].min()
+        if max_val != min_val:
+            df_norm[col] = (df_norm[col] - min_val) / (max_val - min_val)
+        else:
+            df_norm[col] = 0.0
+
+    df_melt = df_norm.melt(
+        id_vars=["Grupo", "Clase"],
+        value_vars=cols_numericas,
+        var_name="Característica",
+        value_name="Magnitud Normalizada",
+    )
+
+    # col_wrap=3 significa que pondrá 3 gráficos por fila
+    g = sns.catplot(
+        data=df_melt,
+        x="Magnitud Normalizada",
+        y="Grupo",
+        col="Característica",
+        hue="Clase",  # distingue colores por clase
+        kind="bar",
+        col_wrap=3,
+        height=3,
+        aspect=1.5,
+        palette="Set2",
+        sharex=True,
+    )
+
+    g.set_titles(col_template="{col_name}", size=12, fontweight="bold")
+    g.set_axis_labels("Magnitud normalizada (0-1)", "")
+
+    plt.subplots_adjust(top=0.92)
+    g.fig.suptitle("Comparativa de características acústicas por grupo", fontsize=16)
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Guardado: {filename}")

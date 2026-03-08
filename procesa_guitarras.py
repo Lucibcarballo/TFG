@@ -40,11 +40,15 @@ def main():
 
     df = pd.DataFrame(dataset)
 
+    print("\n--- [DEBUG] 1. COLUMNAS ORIGINALES AL EXTRAER EL AUDIO ---")
+    print(df.columns.tolist())
+
     # Limpiar nombres de archivo para LaTeX (quitar guiones bajos)
     df["filename"] = df["filename"].str.replace(".wav", "", regex=False)
     df["filename"] = df["filename"].str.replace("notas_", "", regex=False)
     df["filename"] = df["filename"].str.replace("_", "-")
 
+    # renombramos para el csv y la tabla LaTeX, graficos usan los nombres originales
     nombres_cortos = {
         "filename": "Archivo",
         "clase": "Clase",
@@ -60,6 +64,8 @@ def main():
         "tnr": "TNR",
         "pr": "PR",
     }
+
+    print(df.columns.tolist())
 
     df.rename(columns=nombres_cortos, inplace=True)
 
@@ -79,14 +85,8 @@ def main():
 
     print("\n--- Generando gráficos ---")
     caracteristicas_audio.generate_comparative_graphs(df)
-
-    caracteristicas_audio.generate_3d_pca_graph(df, filename="grafico_3d.png")
-    caracteristicas_audio.generate_pca_per_string(
-        df, filename="guitarras_pca_cuerdas.png"
-    )
-
-    caracteristicas_audio.generate_correlation_matrix(
-        df, filename="correlation_matrix.png"
+    caracteristicas_audio.generate_small_multiples_bars(
+        df, filename="small_multiples.png"
     )
 
     print("\nProceso finalizado.")
