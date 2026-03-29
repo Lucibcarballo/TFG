@@ -5,10 +5,13 @@ import caracteristicas_audio
 
 
 def main():
-    # configuración de rutas
-    input_folder = r"C:\Users\lucib\Desktop\TFG\audio\MIS_AUDIOS\notas_separadas"
-    output_csv = "dataset_guitarras.csv"
-    output_latex = "tabla_guitarras.tex"
+    # _____________________-OJO: AJUSTAR configuración de rutas_________________________
+    input_folder = (
+        r"C:\Users\lucib\Desktop\TFG\audio\grabaciones_5marzo\notas_separadas"
+    )
+    output_csv = "dataset_guitarra_grabaciones.csv"
+    output_latex = "tabla_guitarra_grabaciones.tex"
+    # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
         print(f"Error: No se encuentra la carpeta {input_folder}")
@@ -31,9 +34,10 @@ def main():
         # añadir metadatos
         features["filename"] = archivo
         # Etiquetamos según el nombre del archivo
-        features["clase"] = (
-            "electrica" if "electrica" in archivo.lower() else "española"
-        )
+        # features["clase"] = (
+        #     "electrica" if "electrica" in archivo.lower() else "española"
+        # )
+        features["clase"] = "uña" if "uña" in archivo.lower() else "yema"
 
         dataset.append(features)
         print(f"[OK] Procesado: {archivo}")

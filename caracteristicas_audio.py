@@ -470,45 +470,45 @@ def generate_comparative_graphs(
     print("Guardado: radar_chart.png")
     plt.close()
 
-    # _____________________BARRAS AGRUPADAS_______________________
-    print("Generando gráfico de barras...")
+    # # _____________________BARRAS AGRUPADAS_______________________
+    # print("Generando gráfico de barras...")
 
-    # Usamos df_norm que ya tiene los grupos (pua-electrica, uña-electrica, etc.)
-    df_melt = df_norm.melt(
-        id_vars=["Grupo", "Clase"],
-        value_vars=cols_numericas,
-        var_name="Característica",
-        value_name="Valor Normalizado",
-    )
+    # # Usamos df_norm que ya tiene los grupos (pua-electrica, uña-electrica, etc.)
+    # df_melt = df_norm.melt(
+    #     id_vars=["Grupo", "Clase"],
+    #     value_vars=cols_numericas,
+    #     var_name="Característica",
+    #     value_name="Valor Normalizado",
+    # )
 
-    # Ordenar para que salgan agrupados visualmente por clase
-    df_melt.sort_values(by=["Clase", "Grupo"], inplace=True)
+    # # Ordenar para que salgan agrupados visualmente por clase
+    # df_melt.sort_values(by=["Clase", "Grupo"], inplace=True)
 
-    num_grupos = len(df_norm["Grupo"].unique())
-    altura_figura = max(5, num_grupos * 0.8)
+    # num_grupos = len(df_norm["Grupo"].unique())
+    # altura_figura = max(5, num_grupos * 0.8)
 
-    plt.figure(figsize=(12, altura_figura))
+    # plt.figure(figsize=(12, altura_figura))
 
-    sns.barplot(
-        data=df_melt,
-        y="Grupo",
-        x="Valor Normalizado",
-        hue="Característica",
-        palette="tab10",
-        orient="h",
-    )
+    # sns.barplot(
+    #     data=df_melt,
+    #     y="Grupo",
+    #     x="Valor Normalizado",
+    #     hue="Característica",
+    #     palette="tab10",
+    #     orient="h",
+    # )
 
-    plt.title("Características promedio por grupos")
-    plt.xlabel("Magnitud normalizada")
-    plt.ylabel("Grupo")
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", title="Características")
-    plt.tight_layout()
-    plt.grid(axis="x", alpha=0.3)
+    # plt.title("Características promedio por grupos")
+    # plt.xlabel("Magnitud normalizada")
+    # plt.ylabel("Grupo")
+    # plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", title="Características")
+    # plt.tight_layout()
+    # plt.grid(axis="x", alpha=0.3)
 
-    plt.savefig("grafico_barras.png", dpi=300, bbox_inches="tight")
-    print("Guardado: grafico_barras.png")
+    # plt.savefig("grafico_barras.png", dpi=300, bbox_inches="tight")
+    # print("Guardado: grafico_barras.png")
 
-    plt.close()
+    # plt.close()
 
 
 def generate_3d_pca_graph(
