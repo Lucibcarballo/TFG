@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comparador de guitarras</title>
+    <title>Evaluación de guitarras</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -203,8 +203,7 @@
     <div class="survey-container">
         <h2> Evaluación Subjetiva</h2>
 
-        <form id="formulario-encuesta" action="https://formspree.io/f/mkopvjrz" method="POST">
-
+        <form id="formulario-encuesta">
             <div
                 style="margin-bottom: 25px; padding: 15px; background-color: #383838; border-radius: 8px; border-left: 5px solid #4db8ff;">
                 <label for="nombre" style="display:block; margin-bottom:10px; font-weight:bold;">Nombre del
@@ -221,7 +220,29 @@
             <textarea id="comentarios" name="Comentarios"
                 placeholder="Escribe aquí tus comentarios, distintas características, conclusiones..."></textarea>
 
-            <button type="submit">Enviar Evaluación</button>
+            <button type="submit" id="btn-enviar">Enviar Evaluación</button>
+            <p id="estado"></p>
+
+            <!-- <div id="contenedor-estado"
+                style="display:none; margin-top:20px; padding:15px; border-radius:8px; background: #333; text-align: center;">
+                <div id="spinner"
+                    style="border: 4px solid #f3f3f3; border-top: 4px solid #4db8ff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;">
+                </div>
+                <p id="texto-estado" style="margin:0; font-weight:bold;"></p>
+            </div> -->
+
+            <style>
+                @keyframes spin {
+                    0% {
+                        transform: rotate(0deg);
+                    }
+
+                    100% {
+                        transform: rotate(360deg);
+                    }
+                }
+            </style>
+
 
         </form>
     </div>
@@ -241,7 +262,7 @@
         const caracteristicas = ['Brillantez', 'Proyección', 'Sustain', 'Cuerpo', 'Claridad', 'Equilibrio'];
         const numAudios = 10;
         const contenedorEncuesta = document.getElementById('formularios-caracteristicas');
-
+        const scriptURL = "https://script.google.com/macros/s/AKfycbymNlC_JGPoHq5TuOvHYFW2rtd1SRCbPgoCO5zSO5BAeyDuWeLoyd-vZKKAo0qblFYCUA/exec";
         caracteristicas.forEach(char => {
             let htmlSeccion = `
                 <div class="char-section">
@@ -263,30 +284,41 @@
             htmlSeccion += `</div></div>`;
             contenedorEncuesta.innerHTML += htmlSeccion;
         });
-        //  ORDENAR LOS DATOS ANTES DE ENVIARLOS
-        document.getElementById('formulario-encuesta').addEventListener('submit', function (event) {
-            let resumen = "\n";
 
-            // Recopilamos las 10 pistas y hacemos el texto bonito
-            for (let i = 1; i <= 10; i++) {
-                resumen += `=== PISTA ${i} ===\n`;
-                caracteristicas.forEach(char => {
-                    let slider = document.querySelector(`input[name="${char} - Pista ${i}"]`);
-                    if (slider) {
-                        resumen += `${char}: ${slider.value}  |  `;
-                    }
+        // Lógica para enviar el formulario a Google Sheets
+        const form = document.getElementById("formulario-encuesta");
+        const estado = document.getElementById("estado");
+        const btnEnviar = document.getElementById("btn-enviar");
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            btnEnviar.disabled = true;
+            estado.textContent = "Enviando datos...";
+
+            const formData = new FormData(form);
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            })
+
+                .then(() => {
+                    estado.innerText = "✅ ¡Éxito! Los datos ya están en el Excel.";
+                    estado.style.color = "#00ff88";
+                    btnEnviar.innerText = "Enviar otra evaluación";
+                    btnEnviar.disabled = false;
+                    form.reset();
+                    document.querySelectorAll('.value-display').forEach(s => s.innerText = "5");
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    estado.innerText = "❌ Error de red o URL incorrecta.";
+                    estado.style.color = "#ff4d4d";
+                    btnEnviar.disabled = false;
+                    btnEnviar.innerText = "Reintentar";
                 });
-                resumen += "\n\n";
-            }
-
-            // Metemos el texto en el campo invisible
-            document.getElementById('resultados_agrupados').value = resumen;
-
-            // Borramos los nombres de los sliders para que Formspree no los envíe sueltos
-            const todosLosSliders = document.querySelectorAll('input[type="range"]');
-            todosLosSliders.forEach(slider => slider.removeAttribute('name'));
         });
-
     </script>
 </body>
 
