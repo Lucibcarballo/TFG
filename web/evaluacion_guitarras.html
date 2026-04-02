@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de guitarras</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4db8ff;
+        }
+
+        /* Cuadrícula para los audios */
+        .player-container {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .audio-box {
+            text-align: center;
+            width: 100%;
+        }
+
+        audio {
+            width: 100%;
+            outline: none;
+        }
+
+        .survey-container {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* Estilos para las secciones de características */
+        .char-section {
+            background-color: #383838;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4db8ff;
+        }
+
+        .char-section h3 {
+            margin-top: 0;
+            color: #4db8ff;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+
+        /* Cuadrícula para los  10 sliders dentro de cada característica */
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .slider-row label {
+            width: 70px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input[type=range] {
+            flex-grow: 1;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+
+        .value-display {
+            font-weight: bold;
+            color: #4db8ff;
+            width: 20px;
+            text-align: right;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: #1e1e1e;
+            color: white;
+            border: 1px solid #4db8ff;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #4db8ff;
+            color: #1e1e1e;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #3aa1e5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1> Comparador de Grabaciones</h1>
+
+    <div class="player-container">
+        <!-- audios en la misma carpeta -->
+        <div class="audio-box">
+            <h3>Audio 1</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra 1_415Hzalejandro pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 2</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra 1_415Hzuxia pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 3</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra2_alejandro pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 4</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra2_uxia pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 5</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra3_alejandro pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 6</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra3_uxia pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 7</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra4_alejandro pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 8</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra4_uxia pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 9</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra5_alejandro pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+        <div class="audio-box">
+            <h3>Audio 10</h3>
+            <audio controls class="audio-player">
+                <source src="guitarra5_uxia pieza.wav" type="audio/wav">
+            </audio>
+        </div>
+    </div>
+
+
+    <div class="survey-container">
+        <h2> Evaluación Subjetiva</h2>
+
+        <form id="formulario-encuesta" action="https://formspree.io/f/mkopvjrz" method="POST">
+
+            <div
+                style="margin-bottom: 25px; padding: 15px; background-color: #383838; border-radius: 8px; border-left: 5px solid #4db8ff;">
+                <label for="nombre" style="display:block; margin-bottom:10px; font-weight:bold;">Nombre del
+                    Evaluador:</label>
+                <input type="text" id="nombre" name="Nombre del Evaluador" placeholder="Introduce tu nombre completo"
+                    required
+                    style="width: 100%; padding: 10px; background-color: #1e1e1e; color: white; border: 1px solid #4db8ff; border-radius: 5px; box-sizing: border-box;">
+            </div>
+
+            <div id="formularios-caracteristicas"></div>
+
+            <label for="comentarios" style="display:block; margin-top:20px;"><b>Notas adicionales /
+                    Conclusiones:</b></label>
+            <textarea id="comentarios" name="Comentarios"
+                placeholder="Escribe aquí tus comentarios, distintas características, conclusiones..."></textarea>
+
+            <button type="submit">Enviar Evaluación</button>
+
+        </form>
+    </div>
+
+    <script>
+        // Lógica para que solo suene un audio a la vez
+        const players = document.querySelectorAll('.audio-player');
+        players.forEach(player => {
+            player.addEventListener('play', event => {
+                players.forEach(p => {
+                    if (p !== event.target) p.pause();
+                });
+            });
+        });
+
+        // Generador automático de encuestas con el atributo "name" para el correo
+        const caracteristicas = ['Brillantez', 'Proyección', 'Sustain', 'Cuerpo', 'Claridad', 'Equilibrio'];
+        const numAudios = 10;
+        const contenedorEncuesta = document.getElementById('formularios-caracteristicas');
+
+        caracteristicas.forEach(char => {
+            let htmlSeccion = `
+                <div class="char-section">
+                    <h3>${char}</h3>
+                    <div class="sliders-grid">
+            `;
+
+            for (let i = 1; i <= numAudios; i++) {
+                // para que lleguen bien los resultados al email
+                htmlSeccion += `
+                    <div class="slider-row">
+                        <label>Aud. ${i}:</label>
+                        <input type="range" name="${char} - Audio ${i}" min="1" max="10" value="5" oninput="this.nextElementSibling.innerText = this.value">
+                        <span class="value-display">5</span>
+                    </div>
+                `;
+            }
+
+            htmlSeccion += `</div></div>`;
+            contenedorEncuesta.innerHTML += htmlSeccion;
+        });
+        //  ORDENAR LOS DATOS ANTES DE ENVIARLOS
+        document.getElementById('formulario-encuesta').addEventListener('submit', function (event) {
+            let resumen = "\n";
+
+            // Recopilamos las 10 pistas y hacemos el texto bonito
+            for (let i = 1; i <= 10; i++) {
+                resumen += `=== PISTA ${i} ===\n`;
+                caracteristicas.forEach(char => {
+                    let slider = document.querySelector(`input[name="${char} - Pista ${i}"]`);
+                    if (slider) {
+                        resumen += `${char}: ${slider.value}  |  `;
+                    }
+                });
+                resumen += "\n\n";
+            }
+
+            // Metemos el texto en el campo invisible
+            document.getElementById('resultados_agrupados').value = resumen;
+
+            // Borramos los nombres de los sliders para que Formspree no los envíe sueltos
+            const todosLosSliders = document.querySelectorAll('input[type="range"]');
+            todosLosSliders.forEach(slider => slider.removeAttribute('name'));
+        });
+
+    </script>
+</body>
+
+</html>

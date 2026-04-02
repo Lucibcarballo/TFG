@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario</title>
+</head>
+
+<body>
+
+    <h2>Formulario de contacto</h2>
+
+    <form id="formulario">
+        <input type="text" name="nombre" placeholder="Nombre" required><br><br>
+        <input type="email" name="email" placeholder="Email" required><br><br>
+        <textarea name="mensaje" placeholder="Mensaje"></textarea><br><br>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <p id="estado"></p>
+
+    <script>
+        const form = document.getElementById("formulario");
+        const estado = document.getElementById("estado");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            console.log(formData.get("nombre"), formData.get("email"), formData.get("mensaje"));
+
+            fetch("https://script.google.com/macros/s/AKfycbyheCywyevVhhLOdEy_eP09AcMbLE2A21TFmes3AhQZisPqMWn5jhSgaEUlJaRjQlZT/exec", {
+                method: "POST",
+                mode: "no-cors",
+                body: formData
+            })
+                .then(() => {
+                    estado.textContent = "✅ Enviado correctamente";
+                    form.reset();
+                })
+                .catch(() => {
+                    estado.textContent = "❌ Error al enviar";
+                });
+        });
+    </script>
+
+</body>
+
+</html>
