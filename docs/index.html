@@ -204,6 +204,9 @@
         <h2> Evaluación Subjetiva</h2>
 
         <form id="formulario-encuesta">
+
+            <div id="formularios-caracteristicas"></div>
+
             <div
                 style="margin-bottom: 25px; padding: 15px; background-color: #383838; border-radius: 8px; border-left: 5px solid #4db8ff;">
                 <label for="nombre" style="display:block; margin-bottom:10px; font-weight:bold;">Nombre del
@@ -212,8 +215,6 @@
                     required
                     style="width: 100%; padding: 10px; background-color: #1e1e1e; color: white; border: 1px solid #4db8ff; border-radius: 5px; box-sizing: border-box;">
             </div>
-
-            <div id="formularios-caracteristicas"></div>
 
             <label for="comentarios" style="display:block; margin-top:20px;"><b>Notas adicionales /
                     Conclusiones:</b></label>
@@ -304,7 +305,7 @@
             })
 
                 .then(() => {
-                    estado.innerText = "✅ ¡Éxito! Los datos ya están en el Excel.";
+                    estado.innerText = "¡Listo! Datos enviados.";
                     estado.style.color = "#00ff88";
                     btnEnviar.innerText = "Enviar otra evaluación";
                     btnEnviar.disabled = false;
@@ -313,7 +314,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    estado.innerText = "❌ Error de red o URL incorrecta.";
+                    estado.innerText = "Error al enviar.";
                     estado.style.color = "#ff4d4d";
                     btnEnviar.disabled = false;
                     btnEnviar.innerText = "Reintentar";
