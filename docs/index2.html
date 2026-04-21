@@ -241,7 +241,7 @@
                 style="margin-bottom: 25px; padding: 15px; background-color: #383838; border-radius: 8px; border-left: 5px solid #4db8ff;">
                 <label for="nombre" style="display:block; margin-bottom:10px; font-weight:bold;">Nombre del
                     Evaluador:</label>
-                <input type="text" id="nombre" name="Nombre del Evaluador" placeholder="Introduce tu nombre completo"
+                <input type="text" id="nombre" name="Nombre del Evaluador" placeholder="Introduce tu nombre..."
                     required>
             </div>
 
@@ -377,7 +377,7 @@
                 body: formData
             })
                 .then(() => {
-                    estado.innerText = "¡Listo! Datos enviados con éxito.";
+                    estado.innerText = "¡Listo! Datos enviados con éxito. Gracias por tu participación.";
                     estado.style.color = "#00ff88";
                     btnEnviar.innerText = "Enviar otra evaluación";
                     btnEnviar.disabled = false;

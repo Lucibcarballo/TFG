@@ -4,23 +4,26 @@ function doPost(e) {
   var atributos = ['Brillantez', 'Proyección', 'Sustain', 'Cuerpo', 'Claridad', 'Equilibrio'];
   var datos = [];
 
+  // 1. Fecha y Hora
   datos.push(new Date());
 
-  var nombre = e.parameter['Nombre del Evaluador']
-  datos.push(nombre)
+  // 2. Nombre del Evaluador
+  var nombre = e.parameter['Nombre del Evaluador'];
+  datos.push(nombre);
 
-  // Recorremos cada atributo y cada audio
+  // 3. Recorremos cada atributo y cada PUESTO (del 1 al 5)
+  // En el HTML el name es: "Atributo - X Puesto"
   for (var i = 0; i < atributos.length; i++) {
     for (var j = 1; j <= 5; j++) {
-      var key = atributos[i] + ' - Audio ' + j;
-      var valor = e.parameter[key] || ''; // por si viene vacío
+      var key = atributos[i] + ' - ' + j + ' Puesto'; // Cambio clave aquí
+      var valor = e.parameter[key] || '';
       datos.push(valor);
     }
   }
 
-  var comentario = e.parameter['Comentarios']
-  datos.push(comentario)
-
+  // 4. Comentarios finales
+  var comentario = e.parameter['Comentarios'];
+  datos.push(comentario);
 
   // Guardar fila completa
   sheet.appendRow(datos);
