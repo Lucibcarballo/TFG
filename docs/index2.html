@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluación de guitarras</title>
+    <title>Evaluación y Ranking de Guitarras</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,8 @@
             padding: 20px;
         }
 
-        h1 {
+        h1,
+        h2 {
             text-align: center;
             color: #4db8ff;
         }
@@ -27,19 +28,29 @@
             border-radius: 10px;
             margin-bottom: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             justify-items: center;
         }
 
         .audio-box {
             text-align: center;
             width: 100%;
+            background: #383838;
+            padding: 10px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .audio-box h3 {
+            margin-top: 0;
+            font-size: 16px;
         }
 
         audio {
             width: 100%;
             outline: none;
+            height: 35px;
         }
 
         .survey-container {
@@ -51,9 +62,9 @@
         /* Estilos para las secciones de características */
         .char-section {
             background-color: #383838;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             border-left: 5px solid #4db8ff;
         }
 
@@ -62,52 +73,96 @@
             color: #4db8ff;
             border-bottom: 1px solid #555;
             padding-bottom: 10px;
-        }
-
-        /* Cuadrícula para los  10 sliders dentro de cada característica */
-        .sliders-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .slider-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
+        }
+
+        .char-section h3 span {
+            font-size: 14px;
+            color: #aaa;
+            font-weight: normal;
+        }
+
+        /* Cuadrícula para los selectores de ranking */
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .ranking-row {
+            display: flex;
+            flex-direction: column;
             background-color: #2a2a2a;
             padding: 10px;
             border-radius: 5px;
+            border: 1px solid #444;
         }
 
-        .slider-row label {
-            width: 70px;
+        .ranking-row label {
             font-weight: bold;
             font-size: 14px;
+            margin-bottom: 8px;
+            text-align: center;
+            color: #ccc;
         }
 
-        input[type=range] {
-            flex-grow: 1;
-            margin: 0 10px;
+        .ranking-row label.first {
+            color: #ffd700;
+        }
+
+        /* Dorado para el 1ro */
+        .ranking-row label.last {
+            color: #ff6b6b;
+        }
+
+        /* Rojo para el último */
+
+        select {
+            background-color: #1e1e1e;
+            color: white;
+            border: 1px solid #4db8ff;
+            padding: 8px;
+            border-radius: 4px;
             cursor: pointer;
-        }
-
-        .value-display {
-            font-weight: bold;
-            color: #4db8ff;
-            width: 20px;
-            text-align: right;
-        }
-
-        textarea {
+            font-size: 14px;
             width: 100%;
-            height: 100px;
+        }
+
+        select option {
+            background-color: #1e1e1e;
+        }
+
+        select.error {
+            border-color: #ff4d4d;
+            background-color: #4a1e1e;
+        }
+
+        .error-message {
+            color: #ff4d4d;
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+            font-weight: bold;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
             background-color: #1e1e1e;
             color: white;
             border: 1px solid #4db8ff;
             border-radius: 5px;
             padding: 10px;
-            margin-top: 10px;
             box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            margin-top: 10px;
             resize: vertical;
         }
 
@@ -128,16 +183,19 @@
         button:hover {
             background-color: #3aa1e5;
         }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 
 <body>
 
-    <h1> Comparador de Grabaciones</h1>
+    <h1>Comparador y Ranking de Guitarras</h1>
 
     <div class="player-container">
-        <!-- los audios tienen que estar en la misma carpeta -->
-
         <div class="audio-box">
             <h3>Audio 1</h3>
             <audio controls class="audio-player">
@@ -170,10 +228,10 @@
         </div>
     </div>
 
-
-
     <div class="survey-container">
-        <h2> Evaluación Subjetiva</h2>
+        <h2>Ordena de Mayor a Menor</h2>
+        <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Compara los audios y asigna un puesto único a
+            cada uno por característica. No puedes repetir audios en la misma fila.</p>
 
         <form id="formulario-encuesta">
 
@@ -184,8 +242,7 @@
                 <label for="nombre" style="display:block; margin-bottom:10px; font-weight:bold;">Nombre del
                     Evaluador:</label>
                 <input type="text" id="nombre" name="Nombre del Evaluador" placeholder="Introduce tu nombre completo"
-                    required
-                    style="width: 100%; padding: 10px; background-color: #1e1e1e; color: white; border: 1px solid #4db8ff; border-radius: 5px; box-sizing: border-box;">
+                    required>
             </div>
 
             <label for="comentarios" style="display:block; margin-top:20px;"><b>Notas adicionales /
@@ -194,28 +251,7 @@
                 placeholder="Escribe aquí tus comentarios, distintas características, conclusiones..."></textarea>
 
             <button type="submit" id="btn-enviar">Enviar Evaluación</button>
-            <p id="estado"></p>
-
-            <!-- <div id="contenedor-estado"
-                style="display:none; margin-top:20px; padding:15px; border-radius:8px; background: #333; text-align: center;">
-                <div id="spinner"
-                    style="border: 4px solid #f3f3f3; border-top: 4px solid #4db8ff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;">
-                </div>
-                <p id="texto-estado" style="margin:0; font-weight:bold;"></p>
-            </div> -->
-
-            <style>
-                @keyframes spin {
-                    0% {
-                        transform: rotate(0deg);
-                    }
-
-                    100% {
-                        transform: rotate(360deg);
-                    }
-                }
-            </style>
-
+            <p id="estado" style="text-align: center; font-weight: bold; margin-top: 15px;"></p>
 
         </form>
     </div>
@@ -231,42 +267,107 @@
             });
         });
 
-        // Generador automático de encuestas con el atributo "name" para el correo
         const caracteristicas = ['Brillantez', 'Proyección', 'Sustain', 'Cuerpo', 'Claridad', 'Equilibrio'];
+        const puestos = ['1º (Más)', '2º Puesto', '3º Puesto', '4º Puesto', '5º (Menos)'];
         const numAudios = 5;
         const contenedorEncuesta = document.getElementById('formularios-caracteristicas');
+
+        // URL de tu Google Script
         const scriptURL = "https://script.google.com/macros/s/AKfycbymNlC_JGPoHq5TuOvHYFW2rtd1SRCbPgoCO5zSO5BAeyDuWeLoyd-vZKKAo0qblFYCUA/exec";
-        caracteristicas.forEach(char => {
+
+        // Generador de la cuadrícula de rankings
+        caracteristicas.forEach((char, indexChar) => {
             let htmlSeccion = `
-                <div class="char-section">
-                    <h3>${char}</h3>
-                    <div class="sliders-grid">
+                <div class="char-section" id="section-${indexChar}">
+                    <h3>${char} <span>(Del mayor al menor)</span></h3>
+                    <div class="ranking-grid">
             `;
 
-            for (let i = 1; i <= numAudios; i++) {
-                // para que lleguen bien los resultados al email
+            for (let i = 0; i < puestos.length; i++) {
+                let labelClass = i === 0 ? 'first' : (i === 4 ? 'last' : '');
+
+                // Name para Google Sheets: Ej. "Brillantez - 1 Puesto"
                 htmlSeccion += `
-                    <div class="slider-row">
-                        <label>Aud. ${i}:</label>
-                        <input type="range" name="${char} - Audio ${i}" min="1" max="10" value="5" oninput="this.nextElementSibling.innerText = this.value">
-                        <span class="value-display">5</span>
+                    <div class="ranking-row">
+                        <label class="${labelClass}">${puestos[i]}</label>
+                        <select name="${char} - ${i + 1} Puesto" class="select-rank" data-char="${indexChar}" required>
+                            <option value="" disabled selected>Elige audio...</option>
+                            <option value="Audio 1">Audio 1</option>
+                            <option value="Audio 2">Audio 2</option>
+                            <option value="Audio 3">Audio 3</option>
+                            <option value="Audio 4">Audio 4</option>
+                            <option value="Audio 5">Audio 5</option>
+                        </select>
                     </div>
                 `;
             }
 
-            htmlSeccion += `</div></div>`;
+            htmlSeccion += `
+                    </div>
+                    <div class="error-message" id="error-${indexChar}">¡Error! Has repetido un audio en esta característica.</div>
+                </div>`;
             contenedorEncuesta.innerHTML += htmlSeccion;
+        });
+
+        // Lógica de validación: Evitar que seleccionen el mismo audio en la misma característica
+        const btnEnviar = document.getElementById("btn-enviar");
+        const allSelects = document.querySelectorAll('.select-rank');
+
+        function checkDuplicates() {
+            let hasGlobalError = false;
+
+            // Revisamos cada grupo de características por separado
+            caracteristicas.forEach((char, indexChar) => {
+                const selectsInGroup = document.querySelectorAll(`select[data-char="${indexChar}"]`);
+                const errorMsg = document.getElementById(`error-${indexChar}`);
+                let values = [];
+                let hasLocalError = false;
+
+                // Limpiar estilos de error previos
+                selectsInGroup.forEach(s => s.classList.remove('error'));
+
+                // Recopilar valores seleccionados que no estén vacíos
+                selectsInGroup.forEach(select => {
+                    if (select.value !== "") {
+                        if (values.includes(select.value)) {
+                            hasLocalError = true;
+                            hasGlobalError = true;
+                            // Marcar visualmente los repetidos
+                            selectsInGroup.forEach(s => {
+                                if (s.value === select.value) s.classList.add('error');
+                            });
+                        }
+                        values.push(select.value);
+                    }
+                });
+
+                // Mostrar u ocultar mensaje de error
+                errorMsg.style.display = hasLocalError ? 'block' : 'none';
+            });
+
+            // Deshabilitar botón de enviar si hay errores
+            btnEnviar.disabled = hasGlobalError;
+            return hasGlobalError;
+        }
+
+        // Añadir el evento a todos los selects
+        allSelects.forEach(select => {
+            select.addEventListener('change', checkDuplicates);
         });
 
         // Lógica para enviar el formulario a Google Sheets
         const form = document.getElementById("formulario-encuesta");
         const estado = document.getElementById("estado");
-        const btnEnviar = document.getElementById("btn-enviar");
 
         form.addEventListener('submit', e => {
             e.preventDefault();
+
+            // Chequeo final por si acaso
+            if (checkDuplicates()) return;
+
             btnEnviar.disabled = true;
             estado.textContent = "Enviando datos...";
+            estado.style.color = "#4db8ff";
 
             const formData = new FormData(form);
 
@@ -275,18 +376,16 @@
                 mode: 'no-cors',
                 body: formData
             })
-
                 .then(() => {
-                    estado.innerText = "¡Listo! Datos enviados.";
+                    estado.innerText = "¡Listo! Datos enviados con éxito.";
                     estado.style.color = "#00ff88";
                     btnEnviar.innerText = "Enviar otra evaluación";
                     btnEnviar.disabled = false;
                     form.reset();
-                    document.querySelectorAll('.value-display').forEach(s => s.innerText = "5");
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    estado.innerText = "Error al enviar.";
+                    estado.innerText = "Error al enviar los datos.";
                     estado.style.color = "#ff4d4d";
                     btnEnviar.disabled = false;
                     btnEnviar.innerText = "Reintentar";
