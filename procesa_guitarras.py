@@ -6,11 +6,9 @@ import caracteristicas_audio
 
 def main():
     # _____________________-OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = (
-        r"C:\Users\lucib\Desktop\TFG\audio\grabaciones_5marzo\notas_separadas"
-    )
-    output_csv = "dataset_guitarra_grabaciones.csv"
-    output_latex = "tabla_guitarra_grabaciones.tex"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs"
+    output_csv = "dataset_guitarras_grabaciones_piezas.csv"
+    output_latex = "tabla_guitarras_grabaciones_piezas.tex"
     # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
@@ -20,7 +18,7 @@ def main():
     archivos = [f for f in os.listdir(input_folder) if f.endswith(".wav")]
     dataset = []
 
-    print(f"Procesando {len(archivos)} notas de guitarra...")
+    print(f"Procesando {len(archivos)} audios de guitarra...")
 
     for archivo in archivos:
         path_completo = os.path.join(input_folder, archivo)
