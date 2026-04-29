@@ -5,10 +5,10 @@ import caracteristicas_audio
 
 
 def main():
-    # _____________________-OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs"
-    output_csv = "dataset_guitarras_grabaciones_piezas.csv"
-    output_latex = "tabla_guitarras_grabaciones_piezas.tex"
+    # _____________________OJO: AJUSTAR configuración de rutas_________________________
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\notas"
+    output_csv = "dataset_guitarras_grabaciones_notas.csv"
+    output_latex = "tabla_guitarras_grabaciones_notas.tex"
     # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
@@ -35,7 +35,8 @@ def main():
         # features["clase"] = (
         #     "electrica" if "electrica" in archivo.lower() else "española"
         # )
-        features["clase"] = "uña" if "uña" in archivo.lower() else "yema"
+        # features["clase"] = "uña" if "uña" in archivo.lower() else "yema"
+        features["clase"] = "Uxía" if "uxia" in archivo.lower() else "Alejandro"
 
         dataset.append(features)
         print(f"[OK] Procesado: {archivo}")
