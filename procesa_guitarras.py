@@ -6,9 +6,9 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
-    output_csv = "dataset_guitarras_grabaciones_pruebas.csv"
-    output_latex = "tabla_guitarras_grabaciones_pruebas.tex"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\notas"
+    output_csv = "dataset_guitarras_grabaciones_notas.csv"
+    output_latex = "tabla_guitarras_grabaciones_notas.tex"
     # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
@@ -24,21 +24,56 @@ def main():
         path_completo = os.path.join(input_folder, archivo)
 
         # normaliza automaticamente el audio
-        y, fs = caracteristicas_audio.load_audio(path_completo)
+        y_full, fs = caracteristicas_audio.load_audio(path_completo)
+
+        print(f"Extrayendo características globales de {archivo}...")
 
         # extracción de características resumidas
-        features = caracteristicas_audio.get_summary_values(y, fs)
+        global_features = caracteristicas_audio.get_global_features(y_full, fs)
 
-        # añadir metadatos
-        features["filename"] = archivo
-        # Etiquetamos según el nombre del archivo
-        # features["clase"] = (
-        #     "electrica" if "electrica" in archivo.lower() else "española"
-        # )
-        # features["clase"] = "uña" if "uña" in archivo.lower() else "yema"
-        features["clase"] = "Uxía" if "uxia" in archivo.lower() else "Alejandro"
+        # preparar metadatos base
+        nombre_base = archivo.replace(".wav", "")
+        clase_asignada = "Uxía" if "uxia" in archivo.lower() else "Alejandro"
 
-        dataset.append(features)
+        # DIVISION EN NOTAS si contiene "notas" en el nombre
+        if "notas" in archivo.lower():
+            print(f"Dividiendo {archivo} en notas individuales...")
+            chunk_lenght = 4 * fs  # 4 segundos por nota
+            num_chunks = len(y_full) // chunk_lenght
+
+            print(
+                f" - {archivo} se dividirá en {num_chunks} notas de 4 segundos cada una."
+            )
+
+            for i in range(num_chunks):
+                start = i * chunk_lenght
+                end = start + chunk_lenght
+                y_note = y_full[start:end]
+
+                note_features = caracteristicas_audio.get_global_features(y_note, fs)
+
+                # combinamos características globales y de nota
+                features = {**global_features, **note_features}
+
+                # etiquetar con sufijo de nota
+                features["filename"] = f"{nombre_base}_nota{i+1}"
+                features["clase"] = clase_asignada
+
+                dataset.append(features)
+
+        else:
+            # si no es un archivo de notas, procesamos el audio completo
+            print(
+                f"[{archivo}] No es un archivo de notas. Evaluando solo métricas globales..."
+            )
+
+            features = global_features.copy()
+
+            features["filename"] = nombre_base
+            features["clase"] = clase_asignada
+
+            dataset.append(features)
+
         print(f"[OK] Procesado: {archivo}")
 
     df = pd.DataFrame(dataset)
@@ -59,15 +94,16 @@ def main():
         "decay_time": "Dec(s)",
         "sustain_time": "Sus(s)",
         "inharmonicity": "Inharm",
-        "brillantez": "Brillo",
-        "low_mid_ratio": "L/M Ratio",
+        "brillantez_nota": "Brillo (Nota)",
+        "low_mid_ratio_nota": "L/M (Nota)",
+        "brillantez_global": "Brillo (Global)",
+        "low_mid_ratio_global": "L/M (Global)",
         "loudness": "Loud",
         "sharpness": "Sharp",
         "roughness": "Rough",
         "tnr": "TNR",
         "pr": "PR",
     }
-
     print(df.columns.tolist())
 
     df.rename(columns=nombres_cortos, inplace=True)

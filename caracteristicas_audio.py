@@ -328,36 +328,81 @@ def plot_mosqito_analysis(mq_data):
     plt.show()
 
 
-def get_summary_values(
-    y, fs
-):  # devuelve un diccionario con valores numéricos para el CSV
-
-    # curva ADSR
+def get_note_features(y, fs):
     adsr = ADSR_curve(y, fs)
 
-    # caract espectrales
-    freqs, mag = compute_FFT(y, fs)
+    # inarmonicidad
     spec = compute_spectrogram_data(y, fs)
     inharm = compute_inharmonicity(spec["peaks"], spec["f"])
 
-    # brillantez: relación entre energía en agudos y medios
-    sub = compute_subband_data(y, fs, freqs, mag)
-    e = sub["band_energies"]
-    brillo = e[2] / (
-        e[1] + 1e-10
-    )  # e[2] = energía en agudos, e[1] = energía en medios, evitamos división por cero con 1e-10
-    low_mid = e[0] / (e[1] + 1e-10)  # e[0] = energía en graves
+    freqs, mag = compute_FFT(y, fs)
+    energy_spectrum = mag**2  # energia es proportional al cuadrado de la magnitud
 
-    # mosqito
-    mq_data = compute_mosqito_data(y, fs)
+    # brillantez nota a nota
+    picos = spec["peaks"]
+
+    if len(picos) > 1:
+        f_picos = spec["f"][picos]  # frecuencias en Hz de los picos
+
+        idx_fundamental = np.argmin(
+            np.abs(freqs - f_picos[0])
+        )  # primer pico (fundamental)
+
+        # Sumamos la energía dando un pequeño margen de 3 bins para capturar la "campana" entera del pico
+        margen = 3
+        e_fund = np.sum(
+            energy_spectrum[
+                max(0, idx_fundamental - margen) : min(
+                    len(energy_spectrum), idx_fundamental + margen + 1
+                )
+            ]
+        )
+
+        # energia de los armonicos
+        e_harm = 0
+        for f_harm in f_picos[1:]:
+            idx_h = np.argmin(np.abs(freqs - f_harm))
+            e_harm += np.sum(
+                energy_spectrum[
+                    max(0, idx_h - margen) : min(
+                        len(energy_spectrum), idx_h + margen + 1
+                    )
+                ]
+            )
+
+        # Ratio: Energía en los armónicos / Energía en la fundamental
+        brillo_nota = e_harm / (e_fund + 1e-10)
+
+    else:
+        brillo_nota = 0.0  # Si no hay armónicos, el brillo es 0
+
+    sub = compute_subband_data(y, fs, freqs, mag)
+    low_mid_nota = sub["band_energies"][0] / (sub["band_energies"][1] + 1e-10)
 
     return {
         "attack_time": adsr["attack_time"],
         "decay_time": adsr["decay_time"],
         "sustain_time": adsr["sustain_time"],
         "inharmonicity": inharm,
-        "brillantez": brillo,
-        "low_mid_ratio": low_mid,
+        "brilliance": brillo_nota,
+        "low_mid_ratio": low_mid_nota,
+    }
+
+
+def get_global_features(y, fs):
+
+    freqs, mag = compute_FFT(y, fs)
+    sub = compute_subband_data(y, fs, freqs, mag)
+    e = sub["band_energies"]
+    brillo_global = e[2] / (e[1] + 1e-10)
+    low_mid_global = e[0] / (e[1] + 1e-10)
+
+    # Análisis psicoacústico con Mosqito
+    mq_data = compute_mosqito_data(y, fs)
+
+    return {
+        "brillantez_global": brillo_global,
+        "low_mid_ratio_global": low_mid_global,
         "loudness": mq_data["loudness"]["val"],
         "sharpness": mq_data["sharpness"]["val"],
         "roughness": mq_data["roughness"]["val"],
