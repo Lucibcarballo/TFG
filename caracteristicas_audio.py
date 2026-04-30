@@ -190,8 +190,13 @@ def compute_inharmonicity(peaks, f):
 def compute_subband_data(y, fs, freqs, mag):
     # energia espectral
     f_min, f_max = freqs.min(), freqs.max()
-    cutoffs = np.linspace(f_min, f_max, 4)  # 3 bandas = 4 cortes
-    # N bandas: N+1 puntos (incluye extremos)
+    # cutoffs = np.linspace(f_min, f_max, 4)  # 3 bandas = 4
+    # cutoffs = np.array(
+    #     [80, 300, 1000, 12000]
+    # )  # límites segun guitarra moderna (afinación 440 Hz)
+    cutoffs = np.array(
+        [100, 250, 800, 10000]
+    )  # limites segun guitarra barroca (afinacion 415 Hz)
 
     # integrar energía en cada banda
     band_energies = []
@@ -203,10 +208,20 @@ def compute_subband_data(y, fs, freqs, mag):
     frame_len = int(0.05 * fs)
     hop = int(0.025 * fs)
     window = get_window("hann", frame_len)
+    # bands_def = {
+    #     "graves": (20, 200),
+    #     "medios": (200, 2000),
+    #     "agudos": (2000, fs / 2 - 100),
+    # }
+    # bands_def = {
+    #     "graves": (80, 300),
+    #     "medios": (300, 1000),
+    #     "agudos": (1000, 12000),
+    # }
     bands_def = {
-        "graves": (20, 200),
-        "medios": (200, 2000),
-        "agudos": (2000, fs / 2 - 100),
+        "graves": (100, 250),
+        "medios": (250, 800),
+        "agudos": (800, 10000),
     }
 
     n_frames = int((len(y) - frame_len) / hop) + 1
@@ -325,11 +340,13 @@ def get_summary_values(
     spec = compute_spectrogram_data(y, fs)
     inharm = compute_inharmonicity(spec["peaks"], spec["f"])
 
-    # brillantez
+    # brillantez: relación entre energía en agudos y medios
     sub = compute_subband_data(y, fs, freqs, mag)
     e = sub["band_energies"]
-    brillo = e[2] / (e[1] + 1e-10)
-    low_mid = e[0] / (e[1] + 1e-10)
+    brillo = e[2] / (
+        e[1] + 1e-10
+    )  # e[2] = energía en agudos, e[1] = energía en medios, evitamos división por cero con 1e-10
+    low_mid = e[0] / (e[1] + 1e-10)  # e[0] = energía en graves
 
     # mosqito
     mq_data = compute_mosqito_data(y, fs)

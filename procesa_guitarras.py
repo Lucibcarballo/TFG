@@ -6,9 +6,9 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\notas"
-    output_csv = "dataset_guitarras_grabaciones_notas.csv"
-    output_latex = "tabla_guitarras_grabaciones_notas.tex"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
+    output_csv = "dataset_guitarras_grabaciones_pruebas.csv"
+    output_latex = "tabla_guitarras_grabaciones_pruebas.tex"
     # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
