@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -384,7 +386,7 @@ def get_note_features(y, fs):
         "decay_time": adsr["decay_time"],
         "sustain_time": adsr["sustain_time"],
         "inharmonicity": inharm,
-        "brilliance": brillo_nota,
+        "brillantez": brillo_nota,
         "low_mid_ratio": low_mid_nota,
     }
 
@@ -819,3 +821,60 @@ def generate_small_multiples_bars(df, filename="graficos_small_multiples.png"):
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Guardado: {filename}")
     plt.close()
+
+
+def graph_notes(df, output_folder="graficos_evolucion"):
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Filtrar solo las filas que corresponden a notas individuales
+    df_notas = df[df["Archivo"].str.contains("-nota", case=False, na=False)].copy()
+
+    if df_notas.empty:
+        print("No se encontraron notas individuales para graficar la evolución.")
+        return
+
+    # extraer el número de nota
+    df_notas["Numero_Nota"] = (
+        df_notas["Archivo"].str.extract(r"-nota(\d+)").astype(float)
+    )
+
+    # características que queremos graficar
+    cols_excluir = ["Archivo", "Clase", "Numero_Nota"]
+    caracteristicas = [c for c in df_notas.columns if c not in cols_excluir]
+
+    print(f"\n--- Generando {len(caracteristicas)} gráficos de evolución por nota ---")
+
+    # generar un gráfico de línea por cada característica
+    for feature in caracteristicas:
+        plt.figure(figsize=(10, 6))
+
+        # Lineplot: X = Número de nota, Y = Valor de la característica, Color = Clase
+        sns.lineplot(
+            data=df_notas,
+            x="Numero_Nota",
+            y=feature,
+            hue="Clase",
+            marker="o",
+            err_style="bars",
+        )
+
+        plt.title(f"Evolución de {feature} por Nota", fontsize=14)
+        plt.xlabel("Número de Nota", fontsize=12)
+        plt.ylabel(feature, fontsize=12)
+
+        notas_unicas = sorted(df_notas["Numero_Nota"].dropna().unique())
+        plt.xticks(notas_unicas)
+
+        plt.grid(True, linestyle="--", alpha=0.7)
+        plt.legend(title="Guitarrista")
+        plt.tight_layout()
+
+        # Guardar gráfico limpiando caracteres raros del nombre del archivo
+        nombre_archivo = f"evolucion_{feature.replace('/', '_').replace(' ', '_')}.png"
+        ruta_guardado = os.path.join(output_folder, nombre_archivo)
+        plt.savefig(ruta_guardado, dpi=300)
+        plt.close()
+
+    print(f"[OK] Gráficos de evolución guardados en la carpeta '{output_folder}'.")

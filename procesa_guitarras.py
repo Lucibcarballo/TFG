@@ -51,10 +51,15 @@ def main():
                 end = start + chunk_length
                 y_note = y_full[start:end]
 
-                note_features = caracteristicas_audio.get_global_features(y_note, fs)
+                note_features = caracteristicas_audio.get_note_features(y_note, fs)
+
+                # Renombrar las claves de la nota para que no pisen a las globales
+                note_features_renombradas = {
+                    f"{k}_nota": v for k, v in note_features.items()
+                }
 
                 # combinamos características globales y de nota
-                features = {**global_features, **note_features}
+                features = {**global_features, **note_features_renombradas}
 
                 # etiquetar con sufijo de nota
                 features["filename"] = f"{nombre_base}_nota{i+1}"
@@ -91,10 +96,10 @@ def main():
     nombres_cortos = {
         "filename": "Archivo",
         "clase": "Clase",
-        "attack_time": "Atk(s)",
-        "decay_time": "Dec(s)",
-        "sustain_time": "Sus(s)",
-        "inharmonicity": "Inharm",
+        "attack_time_nota": "Atk(s)",
+        "decay_time_nota": "Dec(s)",
+        "sustain_time_nota": "Sus(s)",
+        "inharmonicity_nota": "Inharm",
         "brillantez_nota": "Brillo (Nota)",
         "low_mid_ratio_nota": "L/M (Nota)",
         "brillantez_global": "Brillo (Global)",
@@ -105,6 +110,7 @@ def main():
         "tnr": "TNR",
         "pr": "PR",
     }
+
     print(df.columns.tolist())
 
     df.rename(columns=nombres_cortos, inplace=True)
@@ -128,6 +134,8 @@ def main():
     caracteristicas_audio.generate_small_multiples_bars(
         df, filename="small_multiples.png"
     )
+
+    caracteristicas_audio.graph_notes(df, output_folder="graficos_por_nota")
 
     print("\nProceso finalizado.")
 
