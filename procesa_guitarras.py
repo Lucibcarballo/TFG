@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import math
 
 import caracteristicas_audio
 
@@ -38,16 +39,16 @@ def main():
         # DIVISION EN NOTAS si contiene "notas" en el nombre
         if "notas" in archivo.lower():
             print(f"Dividiendo {archivo} en notas individuales...")
-            chunk_lenght = 4 * fs  # 4 segundos por nota
-            num_chunks = len(y_full) // chunk_lenght
-
+            chunk_length = 4 * fs  # 4 segundos por nota
+            # Usamos math.ceil para redondear hacia arriba y no perder el último trozo del audio de 39s
+            num_chunks = math.ceil(len(y_full) / chunk_length)
             print(
                 f" - {archivo} se dividirá en {num_chunks} notas de 4 segundos cada una."
             )
 
             for i in range(num_chunks):
-                start = i * chunk_lenght
-                end = start + chunk_lenght
+                start = i * chunk_length
+                end = start + chunk_length
                 y_note = y_full[start:end]
 
                 note_features = caracteristicas_audio.get_global_features(y_note, fs)
