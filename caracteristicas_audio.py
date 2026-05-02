@@ -41,32 +41,51 @@ def ADSR_curve(y, fs, n_fft=2048, hop_length=256):
         librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
     )  # stft: short fourier transform
     env = np.max(S, axis=0)  # máximo por muestra
-    env = env / np.max(env)  # normalizar
+    env = env / (np.max(env) + 1e-10)  # normalizar
 
     # calculo de tiempos en segundos
     times = np.arange(len(env)) * hop_length / fs
 
-    # INDICES DE ADSR
-    # ataque: tiempo hasta alcanzar 90% de la amplitud máxima
-    attack_idx = np.argmax(env >= 0.9)
+    start_mask = env > 0.1
+    if not np.any(start_mask):  # si no hay sonido en todo el clip, todo a 0
+        return {
+            "env": env,
+            "times": times,
+            "attack_time": 0.0,
+            "decay_time": 0.0,
+            "sustain_time": 0.0,
+        }
 
-    # decay: tiempo hasta el nivel de sustain (ej. 50%)
-    decay_idx = attack_idx + np.argmax(env[attack_idx:] <= 0.5)
+    strat_idx = np.argmax(start_mask)
 
-    # sustain: periodo hasta que comienza la caida final
-    sustain_idx = decay_idx + np.argmax(env[decay_idx:] <= 0.5)  # ejemplo simplificado
+    # ATAQUE
+    attack_idx = strat_idx + np.argmax(env[strat_idx:])  # ataque hasta pico maximo
 
-    # release: desde el final del sustain hasta que env cerca de 0
-    release_idx = len(env) - 1  # asumimos que termina al final del clip
+    # DECAY
+    decay = env[attack_idx:] <= 0.5
+    if np.any(decay):
+        decay_idx = attack_idx + np.argmax(decay)
+    else:
+        decay_idx = len(env) - 1  # si no baja del 50%, decay hasta el final
 
-    # devolvemos diccionario con resultados
+    # SUSTAIN
+    sustain = env[decay_idx:] <= 0.1
+    if np.any(sustain):
+        sustain_idx = decay_idx + np.argmax(sustain)
+    else:
+        sustain_idx = len(env) - 1  # si no baja del 10%, sustain hasta el final
+
+    # RESULTADOS: duraciones reales
+    attack_duration = times[attack_idx] - times[strat_idx]
+    decay_duration = times[decay_idx] - times[attack_idx]
+    sustain_duration = times[sustain_idx] - times[decay_idx]
+
     return {
         "env": env,
         "times": times,
-        "attack_time": times[attack_idx],
-        "decay_time": times[decay_idx],
-        "sustain_time": times[sustain_idx],
-        "release_time": times[release_idx],
+        "attack_time": attack_duration,
+        "decay_time": decay_duration,
+        "sustain_time": sustain_duration,
     }
 
 
@@ -472,8 +491,20 @@ def generate_comparative_graphs(
     # Creamos una columna temporal 'Grupo' con el nombre limpio
     df["Grupo"] = df["Archivo"].apply(limpiar_nombre)
 
-    # Identificamos columnas numéricas
+    cols_a_excluir = [
+        "Atk(s)",
+        "Dec(s)",
+        "Sus(s)",
+        "Inharm",
+        "Brillo (Nota)",
+        "L/M (Nota)",
+        "Numero_Nota",
+        "Cuerda",
+    ]  # excluimos características nota a nota para centrarnos en las globales por archivo
+
+    # Identificamos columnas numéricas y filtramos
     cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
+    cols_numericas = [col for col in cols_numericas if col not in cols_a_excluir]
 
     # calculamos la media de todas las notas que tengan el mismo nombre de Grupo
     # Mantenemos 'Clase' (ej: electrica vs española)
@@ -763,17 +794,25 @@ def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
     plt.close()
 
 
-def generate_small_multiples_bars(df, filename="graficos_small_multiples.png"):
+def generate_small_multiples_bars(
+    df, filename="graficos_small_multiples.png"
+):  # datos globales por archivo, no por nota
 
+    cols_a_excluir = [
+        "Atk(s)",
+        "Dec(s)",
+        "Sus(s)",
+        "Inharm",
+        "Brillo (Nota)",
+        "L/M (Nota)",
+        "Numero_Nota",
+        "Cuerda",
+        "Grupo",
+    ]  # excluimos características nota a nota para centrarnos en las globales por archivo
+
+    # Identificamos columnas numéricas y filtramos
     cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
-
-    # eliminamos columnas que no aporten informacion numerica
-    if "Cuerda" in cols_numericas:
-        cols_numericas.remove("Cuerda")
-
-    if "Grupo" in cols_numericas:
-        cols_numericas.remove("Grupo")
-        df["Grupo"] = df["Archivo"].apply(limpiar_nombre)
+    cols_numericas = [col for col in cols_numericas if col not in cols_a_excluir]
 
     df_agrupado = df.groupby(["Grupo", "Clase"])[cols_numericas].mean().reset_index()
 
