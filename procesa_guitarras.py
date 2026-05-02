@@ -84,8 +84,8 @@ def main():
 
     df = pd.DataFrame(dataset)
 
-    print("\n--- [DEBUG] 1. COLUMNAS ORIGINALES AL EXTRAER EL AUDIO ---")
-    print(df.columns.tolist())
+    # print("\n--- [DEBUG] 1. COLUMNAS ORIGINALES AL EXTRAER EL AUDIO ---")
+    # print(df.columns.tolist())
 
     # Limpiar nombres de archivo para LaTeX (quitar guiones bajos)
     df["filename"] = df["filename"].str.replace(".wav", "", regex=False)

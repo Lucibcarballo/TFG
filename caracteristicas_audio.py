@@ -498,7 +498,6 @@ def generate_comparative_graphs(
     mapa_colores = dict(zip(clases_unicas, paleta))
 
     # _______________________RADAR CHART_______________________
-    print("Generando Radar Chart...")
     df_radar = df_norm.groupby("Clase")[cols_numericas].mean().reset_index()
 
     categorias = cols_numericas
@@ -579,8 +578,6 @@ def generate_3d_pca_graph(
     df, filename="grafico_3d_pca.png"
 ):  # para visualizar la separación entre pua, uña, yema
     # utilizamos PCA para reducir dimensionalidad a 3D y graficar
-
-    print("Generando análisis PCA en 3D...")
 
     def detectar_tecnica(nombre_archivo):
         nombre = nombre_archivo.lower()
@@ -767,7 +764,6 @@ def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
 
 
 def generate_small_multiples_bars(df, filename="graficos_small_multiples.png"):
-    print("Generando gráfico de barras (Small Multiples)...")
 
     cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
 
@@ -842,7 +838,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
     # Transformar los datos a formato largo (melt) para Seaborn
     df_melt = df_notas.melt(
-        id_vars=["Numero_Nota", "Clase"],
+        id_vars=["Numero_Nota"],
         value_vars=cols_graficar,
         var_name="Característica",
         value_name="Valor",
@@ -853,7 +849,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         data=df_melt,
         x="Numero_Nota",
         y="Valor",
-        hue="Clase",
+        color="#2c3e50",
         col="Característica",
         kind="line",
         col_wrap=3,  # 3 gráficos por fila
@@ -877,5 +873,5 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
     g.figure.suptitle("Evolución temporal de características por nota", fontsize=16)
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
-    print(f"[OK] Gráfico de evolución guardado en: {filename}")
+    print(f"Guardado: {filename}")
     plt.close()
