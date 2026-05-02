@@ -870,6 +870,12 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
     # extraer el número de nota
     df_notas["Numero_Nota"] = df_notas["Archivo"].str.extract(r"-nota(\d+)").astype(int)
 
+    df_notas["Grupo"] = df_notas["Archivo"].apply(limpiar_nombre)
+
+    df_notas["Intérprete"] = [
+        "Intérprete 1" if n <= 5 else "Intérprete 2" for n in df_notas["Numero_Nota"]
+    ]
+
     cols_notas = ["Atk(s)", "Dec(s)", "Sus(s)", "Inharm", "Brillo (Nota)", "L/M (Nota)"]
 
     # Verificar que las columnas existan por si acaso
@@ -877,7 +883,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
     # Transformar los datos a formato largo (melt) para Seaborn
     df_melt = df_notas.melt(
-        id_vars=["Numero_Nota"],
+        id_vars=["Numero_Nota", "Grupo", "Intérprete"],
         value_vars=cols_graficar,
         var_name="Característica",
         value_name="Valor",
@@ -888,14 +894,16 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         data=df_melt,
         x="Numero_Nota",
         y="Valor",
-        color="#2c3e50",
         col="Característica",
+        hue="Intérprete",
+        style="Grupo",
         kind="line",
+        errorbar=None,
+        palette="Set2",
         col_wrap=3,  # 3 gráficos por fila
         height=3,  # altura de cada subgráfico
         aspect=1.5,  # proporción de anchura
         marker="o",
-        err_style="bars",
         facet_kws={"sharey": False},  # OJO: Cada métrica tiene su propia escala Y
     )
 
@@ -906,7 +914,9 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
     notas_unicas = sorted(df_notas["Numero_Nota"].unique())
     for ax in g.axes.flat:
         ax.set_xticks(notas_unicas)
-        ax.grid(True, linestyle="--", alpha=0.6)
+        # Una línea vertical sutil para marcar la frontera visual entre el 5 y el 6
+        ax.axvline(x=5.5, color="gray", linestyle=":", alpha=0.5)
+        ax.grid(True, linestyle="--", alpha=0.4)
 
     plt.subplots_adjust(top=0.9)
     g.figure.suptitle("Evolución temporal de características por nota", fontsize=16)

@@ -14,13 +14,15 @@ def generate_radar_comparative():
         r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
     )
 
-    # ¿Qué parámetro de la encuesta equivale a qué columna del CSV?
     diccionario_metricas = {  # sacar de metricas como vayamos comparando y viendo similares
+        # subjetivo : objetivo
         "Sustain": "Sus(s)",
         "Brillantez": "Brillo (Global)",
-        # "Proyección": "Loud",  <-- (Ejemplo: descomenta y ajusta según tu criterio)
-        # "Cuerpo": "L/M (Global)",
-        # "Claridad": "TNR"
+        "Proyección": "Loud",
+        "Cuerpo": "Loud",
+        "Claridad": "Sharpness",
+        "Claridad": "Roughness",
+        "Equilibrio": "L/M (Global)",
     }
 
     # ¿Qué "Audio X" de la encuesta corresponde a qué "Grupo" o "Clase" del CSV?
