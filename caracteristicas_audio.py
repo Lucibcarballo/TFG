@@ -823,10 +823,7 @@ def generate_small_multiples_bars(df, filename="graficos_small_multiples.png"):
     plt.close()
 
 
-def graph_notes(df, output_folder="graficos_evolucion"):
-
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
     # Filtrar solo las filas que corresponden a notas individuales
     df_notas = df[df["Archivo"].str.contains("-nota", case=False, na=False)].copy()
@@ -836,45 +833,49 @@ def graph_notes(df, output_folder="graficos_evolucion"):
         return
 
     # extraer el número de nota
-    df_notas["Numero_Nota"] = (
-        df_notas["Archivo"].str.extract(r"-nota(\d+)").astype(float)
+    df_notas["Numero_Nota"] = df_notas["Archivo"].str.extract(r"-nota(\d+)").astype(int)
+
+    cols_notas = ["Atk(s)", "Dec(s)", "Sus(s)", "Inharm", "Brillo (Nota)", "L/M (Nota)"]
+
+    # Verificar que las columnas existan por si acaso
+    cols_graficar = [c for c in cols_notas if c in df_notas.columns]
+
+    # Transformar los datos a formato largo (melt) para Seaborn
+    df_melt = df_notas.melt(
+        id_vars=["Numero_Nota", "Clase"],
+        value_vars=cols_graficar,
+        var_name="Característica",
+        value_name="Valor",
     )
 
-    # características que queremos graficar
-    cols_excluir = ["Archivo", "Clase", "Numero_Nota"]
-    caracteristicas = [c for c in df_notas.columns if c not in cols_excluir]
+    # Generar cuadricula de gráficos
+    g = sns.relplot(
+        data=df_melt,
+        x="Numero_Nota",
+        y="Valor",
+        hue="Clase",
+        col="Característica",
+        kind="line",
+        col_wrap=3,  # 3 gráficos por fila
+        height=3,  # altura de cada subgráfico
+        aspect=1.5,  # proporción de anchura
+        marker="o",
+        err_style="bars",
+        facet_kws={"sharey": False},  # OJO: Cada métrica tiene su propia escala Y
+    )
 
-    print(f"\n--- Generando {len(caracteristicas)} gráficos de evolución por nota ---")
+    g.set_titles(col_template="{col_name}", size=12, fontweight="bold")
+    g.set_axis_labels("Número de Nota", "Valor")
 
-    # generar un gráfico de línea por cada característica
-    for feature in caracteristicas:
-        plt.figure(figsize=(10, 6))
+    # Ajustar el eje X para que solo muestre números enteros (1, 2, 3...)
+    notas_unicas = sorted(df_notas["Numero_Nota"].unique())
+    for ax in g.axes.flat:
+        ax.set_xticks(notas_unicas)
+        ax.grid(True, linestyle="--", alpha=0.6)
 
-        # Lineplot: X = Número de nota, Y = Valor de la característica, Color = Clase
-        sns.lineplot(
-            data=df_notas,
-            x="Numero_Nota",
-            y=feature,
-            hue="Clase",
-            marker="o",
-            err_style="bars",
-        )
+    plt.subplots_adjust(top=0.9)
+    g.figure.suptitle("Evolución temporal de características por nota", fontsize=16)
 
-        plt.title(f"Evolución de {feature} por Nota", fontsize=14)
-        plt.xlabel("Número de Nota", fontsize=12)
-        plt.ylabel(feature, fontsize=12)
-
-        notas_unicas = sorted(df_notas["Numero_Nota"].dropna().unique())
-        plt.xticks(notas_unicas)
-
-        plt.grid(True, linestyle="--", alpha=0.7)
-        plt.legend(title="Guitarrista")
-        plt.tight_layout()
-
-        # Guardar gráfico limpiando caracteres raros del nombre del archivo
-        nombre_archivo = f"evolucion_{feature.replace('/', '_').replace(' ', '_')}.png"
-        ruta_guardado = os.path.join(output_folder, nombre_archivo)
-        plt.savefig(ruta_guardado, dpi=300)
-        plt.close()
-
-    print(f"[OK] Gráficos de evolución guardados en la carpeta '{output_folder}'.")
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"[OK] Gráfico de evolución guardado en: {filename}")
+    plt.close()

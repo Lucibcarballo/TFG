@@ -135,7 +135,7 @@ def main():
         df, filename="small_multiples.png"
     )
 
-    caracteristicas_audio.graph_notes(df, output_folder="graficos_por_nota")
+    caracteristicas_audio.graph_notes(df, filename="evolution_notes.png")
 
     print("\nProceso finalizado.")
 
