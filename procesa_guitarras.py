@@ -7,7 +7,7 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\notas"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
 
     output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
     output_csv_global = "dataset_guitarras_grabaciones_global.csv"

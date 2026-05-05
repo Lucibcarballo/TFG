@@ -16,6 +16,8 @@ def generate_radar_comparative(
     print("Procesando datos subjetivos para Radar Chart...")
     df_subj, es_ranking = preparar_datos(ruta_excel_subj)
 
+    print("Audios encontrados en el Excel:", df_subj["Audio_Num"].unique())
+
     # Filtramos solo los parámetros que hemos mapeado
     df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())]
 
@@ -26,6 +28,7 @@ def generate_radar_comparative(
 
     # Normalizamos (0 a 1).
     if es_ranking:
+        print("Los datos subjetivos son RANKING. ")
         medias_subj["Valor_Norm"] = 1 - ((medias_subj["Puntuacion"] - 1) / 4)
     else:
         medias_subj["Valor_Norm"] = medias_subj["Puntuacion"] / 10.0
@@ -33,6 +36,7 @@ def generate_radar_comparative(
     # --- PREPARAR DATOS OBJETIVOS (CSV) ---
     print("Procesando datos objetivos para Radar Chart...")
     df_obj = pd.read_csv(ruta_csv_obj)
+    df_obj["Archivo"] = df_obj["Archivo"].str.strip()
 
     # Usamos set() para evitar columnas duplicadas al agrupar
     columnas_obj_necesarias = list(set(diccionario_metricas.values()))
@@ -146,6 +150,7 @@ def generate_points_comparative(
     # 2. PREPARAR DATOS OBJETIVOS (Script)
     print("Procesando datos objetivos para Gráfica de Puntos...")
     df_obj = pd.read_csv(ruta_csv_obj)
+    df_obj["Archivo"] = df_obj["Archivo"].str.strip()
     columnas_obj = list(set(diccionario_metricas.values()))
 
     # Agrupamos por Archivo
@@ -264,9 +269,11 @@ if __name__ == "__main__":
     # ================= CONFIGURACIÓN GLOBAL =================
 
     # Rutas de los archivos de datos
-    RUTA_CSV_OBJ = "C:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
+    # RUTA_CSV_OBJ = "C:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
+    RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\piezas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
+
     RUTA_EXCEL_SUBJ = (
-        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
+        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_piezas.xlsx"
     )
 
     # Mapeo de Parámetro Subjetivo (Encuesta) -> Parámetro Objetivo (Código/CSV)
@@ -279,12 +286,23 @@ if __name__ == "__main__":
     }
 
     # Mapeo del Número de Audio de la encuesta -> Nombre del archivo acústico en el CSV
+    # DICCIONARIO_AUDIOS = {
+    #     1: "g5-ambos",
+    #     2: "g4-ambos",
+    #     3: "g3-ambos",
+    #     4: "g2-ambos",
+    #     5: "g1-ambos",
+    # }
+
     DICCIONARIO_AUDIOS = {
-        1: "g5-ambos",
-        2: "g4-ambos",
-        3: "g3-ambos",
-        4: "g2-ambos",
-        5: "g1-ambos",
+        1: "guitarra 1-415Hzalejandro pieza",
+        2: "guitarra 1-415Hzuxia pieza",
+        3: "guitarra2-alejandro pieza",
+        4: "guitarra2-uxia pieza",
+        5: "guitarra3-alejandro pieza",
+        6: "guitarra3-uxia pieza",
+        7: "guitarra4-alejandro pieza",
+        8: "guitarra4-uxia pieza",
     }
 
     # ================= EJECUCIÓN =================

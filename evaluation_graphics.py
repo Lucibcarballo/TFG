@@ -46,9 +46,9 @@ def preparar_datos(ruta_excel):
         # En Puntuacion: el num audio viene de la columna (ej: "Sustain - Audio 1")
         melted["Audio_Num"] = melted["Subcolumna"].str.extract(r"(\d+)")[0].astype(int)
 
-    # OJO MAPEAR SEGUN ORDEN AUDIOS ENCUESTA
-    mapeo_inverso = {5: 1, 4: 2, 3: 3, 2: 4, 1: 5}
-    melted["Audio_Num"] = melted["Audio_Num"].map(mapeo_inverso)
+    # # OJO MAPEAR SEGUN ORDEN AUDIOS ENCUESTA
+    # mapeo_inverso = {5: 1, 4: 2, 3: 3, 2: 4, 1: 5}
+    # melted["Audio_Num"] = melted["Audio_Num"].map(mapeo_inverso)
 
     # Ordenamos por numero de guitarra
     melted = melted.sort_values(by="Audio_Num")
