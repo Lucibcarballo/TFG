@@ -7,13 +7,21 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
+    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
 
-    output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
-    output_csv_global = "dataset_guitarras_grabaciones_global.csv"
+    # output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
+    # output_csv_global = "dataset_guitarras_grabaciones_global.csv"
 
-    output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
-    output_latex_global = "tabla_guitarras_grabaciones_global.tex"
+    # output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
+    # output_latex_global = "tabla_guitarras_grabaciones_global.tex"
+
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas_uxia"
+
+    output_csv_notas = "dataset_guitarras_grabaciones_notas_uxia.csv"
+    output_csv_global = "dataset_guitarras_grabaciones_global_uxia_notas.csv"
+
+    output_latex_notas = "tabla_guitarras_grabaciones_notas_uxia.tex"
+    output_latex_global = "tabla_guitarras_grabaciones_global_uxia_notas.tex"
 
     # __________________________________________________________________________________
 
