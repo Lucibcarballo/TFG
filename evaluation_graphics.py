@@ -193,7 +193,7 @@ if __name__ == "__main__":
     # Puedes poner aquí la ruta de cualquiera de los dos Excels.
     # El código sabrá qué hacer automáticamente.
     RUTA_ARCHIVO = (
-        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_piezas.xlsx"
+        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
     )
 
     df_limpio, es_ranking = preparar_datos(RUTA_ARCHIVO)

@@ -300,9 +300,16 @@ def generate_radar_guitarras_comparative(
     for col in columnas_obj_necesarias:
         max_val = df_obj[col].max()
         if max_val != 0:
-            medias_obj[col] = (
-                df_obj[col] / max_val
-            )  # Normalización directa desde el cero real
+            # medias_obj[col] = (
+            #     df_obj[col] / max_val
+            # )  # Normalización directa desde el cero real
+            if col in ["Atk(s)", "Inharm"]:
+                # Al restar de 1, el valor más bajo físico se convierte en el 100% del radar
+                medias_obj[col] = 1 - (df_obj[col] / max_val)
+                print(f" -> Métrica invertida correctamente: {col}")
+            else:
+                # Las métricas directas se quedan normales (valor / max)
+                medias_obj[col] = df_obj[col] / max_val
         else:
             medias_obj[col] = 0.0
 
@@ -415,6 +422,10 @@ if __name__ == "__main__":
         "Sustain": "Sus(s)",
         "Equilibrio": "L/M (Nota)",
         # con que mas parametros??
+        "Cuerpo": "L/M (Nota)",
+        "Equilibrio": "Dec(s)",
+        "Proyección": "Atk(s)",  # Inversa
+        "Claridad": "Inharm",  # Inversa
     }
 
     # Mapeo del Número de Audio de la encuesta -> Nombre del archivo acústico en el CSV
