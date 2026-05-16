@@ -115,9 +115,6 @@ def main():
     df_notas = pd.DataFrame(dataset_notas)
     df_global = pd.DataFrame(dataset_global)
 
-    # print("\n--- [DEBUG] 1. COLUMNAS ORIGINALES AL EXTRAER EL AUDIO ---")
-    # print(df.columns.tolist())
-
     def procesar_dataframe(df_temp):
         if df_temp.empty:
             return df_temp  # Devuelve el DataFrame vacío sin procesar
@@ -158,17 +155,56 @@ def main():
     df_global = procesar_dataframe(df_global)
     df_notas = procesar_dataframe(df_notas)
 
-    # 1. Datos Globales
+    #  Datos Globales
     if not df_global.empty:
         df_global.to_csv(output_csv_global, index=False)
         caracteristicas_audio.generate_table(df_global, output_latex_global)
         print(f"Globales: {output_csv_global} y {output_latex_global}")
 
-    # 2. Datos de Notas
+    #  Datos de Notas
     if not df_notas.empty:
         df_notas.to_csv(output_csv_notas, index=False)
         caracteristicas_audio.generate_table(df_notas, output_latex_notas)
         print(f"Notas: {output_csv_notas} y {output_latex_notas}")
+
+        # ANALISIS POR GUITARRA - PROMEDIOS DE NOTAS
+        print("\n--- Calculando promedios nota a nota por guitarra ---")
+        df_promedios = df_notas.copy()
+
+        # Extraer el nombre de la guitarra (ej: "g1-alejandro-nota1" -> "g1")
+        df_promedios["Guitarra"] = df_promedios["Archivo"].apply(
+            lambda x: str(x).split("-")[0]
+        )
+
+        # Definir qué columnas numéricas de las notas queremos promediar
+        cols_notas_individuales = [
+            "Atk(s)",
+            "Dec(s)",
+            "Sus(s)",
+            "Inharm",
+            "Brillo (Nota)",
+            "L/M (Nota)",
+        ]
+        cols_existentes = [
+            c for c in cols_notas_individuales if c in df_promedios.columns
+        ]
+
+        # Agrupar por guitarra y calcular la media
+        df_guitarra_notas_medias = (
+            df_promedios.groupby("Guitarra")[cols_existentes].mean().reset_index()
+        )
+
+        # nuevos csv y .tex
+        output_csv_promedio_notas = "dataset_guitarras_promedio_notas.csv"
+        output_latex_promedio_notas = "tabla_guitarras_promedio_notas.tex"
+
+        df_guitarra_notas_medias.to_csv(output_csv_promedio_notas, index=False)
+        caracteristicas_audio.generate_table(
+            df_guitarra_notas_medias, output_latex_promedio_notas
+        )
+
+        print(f"[OK] CSV de promedios guardado: {output_csv_promedio_notas}")
+        print(f"[OK] Tabla LaTeX de promedios guardada: {output_latex_promedio_notas}")
 
     print("\n--- Generando gráficos ---")
     caracteristicas_audio.generate_comparative_graphs(df_global)

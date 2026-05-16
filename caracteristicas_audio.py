@@ -872,9 +872,22 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
     df_notas["Grupo"] = df_notas["Archivo"].apply(limpiar_nombre)
 
-    df_notas["Intérprete"] = [
-        "Intérprete 1" if n <= 5 else "Intérprete 2" for n in df_notas["Numero_Nota"]
-    ]
+    df_notas["Guitarra"] = df_notas["Grupo"].apply(lambda x: str(x).split("-")[0])
+    df_notas["Interprete_Nombre"] = df_notas["Grupo"].apply(
+        lambda x: str(x).split("-")[1] if "-" in str(x) else str(x)
+    )
+
+    interpretes_unicos = sorted(df_notas["Interprete_Nombre"].unique())
+    int_1 = interpretes_unicos[0]
+
+    df_notas["Eje_X"] = df_notas.apply(
+        lambda row: (
+            row["Numero_Nota"]
+            if row["Interprete_Nombre"] == int_1
+            else row["Numero_Nota"] + 5
+        ),
+        axis=1,
+    )
 
     cols_notas = ["Atk(s)", "Dec(s)", "Sus(s)", "Inharm", "Brillo (Nota)", "L/M (Nota)"]
 
@@ -883,7 +896,12 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
     # Transformar los datos a formato largo (melt) para Seaborn
     df_melt = df_notas.melt(
-        id_vars=["Numero_Nota", "Grupo", "Intérprete"],
+        id_vars=[
+            "Eje_X",
+            "Guitarra",
+            "Grupo",
+            "Interprete_Nombre",
+        ],
         value_vars=cols_graficar,
         var_name="Característica",
         value_name="Valor",
@@ -892,33 +910,67 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
     # Generar cuadricula de gráficos
     g = sns.relplot(
         data=df_melt,
-        x="Numero_Nota",
+        x="Eje_X",
         y="Valor",
         col="Característica",
-        hue="Intérprete",
-        style="Grupo",
+        hue="Guitarra",
+        units="Grupo",
+        estimator=None,
         kind="line",
-        errorbar=None,
         palette="Set2",
-        col_wrap=3,  # 3 gráficos por fila
-        height=3,  # altura de cada subgráfico
-        aspect=1.5,  # proporción de anchura
+        col_wrap=2,  # num graficos por fila
+        height=3,
+        aspect=1.5,
         marker="o",
-        facet_kws={"sharey": False},  # OJO: Cada métrica tiene su propia escala Y
+        facet_kws={"sharey": False},
     )
 
     g.set_titles(col_template="{col_name}", size=12, fontweight="bold")
-    g.set_axis_labels("Número de Nota", "Valor")
 
-    # Ajustar el eje X para que solo muestre números enteros (1, 2, 3...)
-    notas_unicas = sorted(df_notas["Numero_Nota"].unique())
+    # Lo quitamos del ajuste general para controlarlo nosotros mismos gráfico por gráfico
+    g.set_axis_labels("", "Valor")
+
     for ax in g.axes.flat:
-        ax.set_xticks(notas_unicas)
-        # Una línea vertical sutil para marcar la frontera visual entre el 5 y el 6
+        ax.set_xticks(range(1, 11))
+        ax.set_xticklabels([5, 4, 3, 2, 1, 5, 4, 3, 2, 1])
+
+        # 1. Empujamos el título del eje X hacia abajo (creamos el hueco)
+        ax.set_xlabel("Número de Nota", labelpad=20)
+
         ax.axvline(x=5.5, color="gray", linestyle=":", alpha=0.5)
+
+        # 2. Metemos los nombres justo en ese hueco (Y = -0.14 suele ir perfecto)
+        nombre_1 = interpretes_unicos[0].capitalize()
+        ax.text(
+            0.25,
+            -0.14,
+            nombre_1,
+            transform=ax.transAxes,
+            ha="center",
+            va="top",
+            fontsize=10,
+            color="gray",
+            fontweight="bold",
+        )
+
+        if len(interpretes_unicos) > 1:
+            nombre_2 = interpretes_unicos[1].capitalize()
+            ax.text(
+                0.75,
+                -0.14,
+                nombre_2,
+                transform=ax.transAxes,
+                ha="center",
+                va="top",
+                fontsize=10,
+                color="gray",
+                fontweight="bold",
+            )
+
         ax.grid(True, linestyle="--", alpha=0.4)
 
-    plt.subplots_adjust(top=0.9)
+    # hspace a 0.4 para que las filas tengan espacio de sobra para este eje X más alto
+    plt.subplots_adjust(top=0.85, hspace=0.4)
     g.figure.suptitle("Evolución temporal de características por nota", fontsize=16)
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")

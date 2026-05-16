@@ -264,16 +264,141 @@ def generate_points_comparative(
     plt.close()
 
 
+def generate_radar_guitarras_comparative(
+    ruta_csv_obj, ruta_excel_subj, diccionario_metricas, mapeo_audio_guitarra
+):
+    # --- 1. PREPARAR DATOS SUBJETIVOS (Encuesta) ---
+    print("Procesando datos subjetivos por Guitarra...")
+    df_subj, es_ranking = preparar_datos(ruta_excel_subj)
+
+    # Filtramos solo los parámetros que hemos mapeado
+    df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())]
+
+    # ¡CLAVE!: Asignamos a qué guitarra pertenece cada número de audio de la encuesta
+    df_subj["Guitarra"] = df_subj["Audio_Num"].map(mapeo_audio_guitarra)
+    df_subj = df_subj.dropna(subset=["Guitarra"])
+
+    # Calculamos la media de puntuación agrupando por GUITARRA y Parámetro
+    medias_subj = (
+        df_subj.groupby(["Guitarra", "Parametro"])["Puntuacion"].mean().reset_index()
+    )
+
+    # Normalizamos la encuesta (0 a 1)
+    if es_ranking:
+        medias_subj["Valor_Norm"] = 1 - ((medias_subj["Puntuacion"] - 1) / 4)
+    else:
+        medias_subj["Valor_Norm"] = medias_subj["Puntuacion"] / 10.0
+
+    # --- 2. PREPARAR DATOS OBJETIVOS (CSV Promedios Nota) ---
+    print("Procesando datos objetivos por Guitarra...")
+    df_obj = pd.read_csv(ruta_csv_obj)
+    df_obj["Guitarra"] = df_obj["Guitarra"].str.strip()
+
+    columnas_obj_necesarias = list(set(diccionario_metricas.values()))
+
+    medias_obj = df_obj.copy()
+    for col in columnas_obj_necesarias:
+        max_val = df_obj[col].max()
+        if max_val != 0:
+            medias_obj[col] = (
+                df_obj[col] / max_val
+            )  # Normalización directa desde el cero real
+        else:
+            medias_obj[col] = 0.0
+
+    # --- 3. GENERAR RADAR CHART POR CADA GUITARRA ---
+    print("Generando Radar Charts comparativos de Guitarras...")
+
+    categorias_subj = list(diccionario_metricas.keys())
+    categorias_obj = [diccionario_metricas[c] for c in categorias_subj]
+    etiquetas_radar = [
+        f"{subj}\nvs {obj}" for subj, obj in zip(categorias_subj, categorias_obj)
+    ]
+
+    N = len(categorias_subj)
+    angulos = [n / float(N) * 2 * pi for n in range(N)]
+    angulos += angulos[:1]
+
+    guitarras_unicas = medias_obj["Guitarra"].unique()
+
+    for guitarra in guitarras_unicas:
+        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "polar"})
+        ax.set_theta_offset(pi / 2)
+        ax.set_theta_direction(-1)
+
+        # Configurar Eje X
+        plt.xticks(
+            angulos[:-1], etiquetas_radar, color="black", size=11, fontweight="bold"
+        )
+
+        # Configurar Eje Y
+        ax.set_rlabel_position(0)
+        plt.yticks(
+            [0.25, 0.5, 0.75, 1.0], ["25%", "50%", "75%", "100%"], color="grey", size=10
+        )
+        plt.ylim(0, 1.1)
+
+        # Dibujar datos SUBJETIVOS (Encuesta)
+        datos_subj_guit = medias_subj[medias_subj["Guitarra"] == guitarra]
+        if not datos_subj_guit.empty:
+            datos_subj_guit = datos_subj_guit.set_index("Parametro").reindex(
+                categorias_subj
+            )
+            valores_subj = datos_subj_guit["Valor_Norm"].values.flatten().tolist()
+            valores_subj += valores_subj[:1]
+
+            ax.plot(
+                angulos,
+                valores_subj,
+                linewidth=2,
+                linestyle="dashed",
+                label="Subjetivo (Encuesta músicos)",
+                color="#e74c3c",
+            )
+            ax.fill(angulos, valores_subj, color="#e74c3c", alpha=0.1)
+
+        # Dibujar datos OBJETIVOS (Código Promedios)
+        datos_obj_guit = medias_obj[medias_obj["Guitarra"] == guitarra]
+        if not datos_obj_guit.empty:
+            valores_obj = datos_obj_guit[categorias_obj].values.flatten().tolist()
+            valores_obj += valores_obj[:1]
+
+            ax.plot(
+                angulos,
+                valores_obj,
+                linewidth=2.5,
+                linestyle="solid",
+                label="Análisis objetivo (Promedio Notas)",
+                color="#2ecc71",  # Color verde para diferenciar
+            )
+            ax.fill(angulos, valores_obj, color="#2ecc71", alpha=0.25)
+
+        # Extraemos solo el número eliminando la 'g' (ej: "g1" -> "1")
+        num_guitarra = guitarra.lower().replace("g", "")
+
+        plt.title(
+            f"Guitarra {num_guitarra}: Análisis Objetivo vs Percepción Subjetiva",
+            size=14,
+            y=1.08,
+            fontweight="bold",
+        )
+        plt.legend(loc="upper right", bbox_to_anchor=(1.2, 1.1))
+
+        nombre_salida = f"radar_comparativo_guitarra_{num_guitarra}.png"
+        plt.savefig(nombre_salida, dpi=300, bbox_inches="tight")
+        print(f" -> Guardado: {nombre_salida}")
+        plt.close()
+
+
 if __name__ == "__main__":
 
-    # ================= CONFIGURACIÓN GLOBAL =================
-
     # Rutas de los archivos de datos
-    # RUTA_CSV_OBJ = "C:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
-    RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\piezas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
+    RUTA_CSV_OBJ = "C:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
+
+    RUTA_CSV_PROMEDIOS_NOTAS = "dataset_guitarras_promedio_notas.csv"
 
     RUTA_EXCEL_SUBJ = (
-        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_piezas.xlsx"
+        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
     )
 
     # Mapeo de Parámetro Subjetivo (Encuesta) -> Parámetro Objetivo (Código/CSV)
@@ -285,29 +410,46 @@ if __name__ == "__main__":
         "Equilibrio": "L/M (Global)",
     }
 
-    # Mapeo del Número de Audio de la encuesta -> Nombre del archivo acústico en el CSV
-    # DICCIONARIO_AUDIOS = {
-    #     1: "g5-ambos",
-    #     2: "g4-ambos",
-    #     3: "g3-ambos",
-    #     4: "g2-ambos",
-    #     5: "g1-ambos",
-    # }
-
-    DICCIONARIO_AUDIOS = {
-        1: "guitarra 1-415Hzalejandro pieza",
-        2: "guitarra 1-415Hzuxia pieza",
-        3: "guitarra2-alejandro pieza",
-        4: "guitarra2-uxia pieza",
-        5: "guitarra3-alejandro pieza",
-        6: "guitarra3-uxia pieza",
-        7: "guitarra4-alejandro pieza",
-        8: "guitarra4-uxia pieza",
+    DICCIONARIO_METRICAS_PROMEDIOS_NOTAS = {
+        "Brillantez": "Brillo (Nota)",
+        "Sustain": "Sus(s)",
+        "Equilibrio": "L/M (Nota)",
+        # con que mas parametros??
     }
 
-    # ================= EJECUCIÓN =================
+    # Mapeo del Número de Audio de la encuesta -> Nombre del archivo acústico en el CSV
+    DICCIONARIO_AUDIOS = {
+        1: "g5-ambos",
+        2: "g4-ambos",
+        3: "g3-ambos",
+        4: "g2-ambos",
+        5: "g1-ambos",
+    }
+    MAPEO_AUDIO_GUITARRA = {
+        5: "g1",  # El Audio 5 del Excel corresponde a la Guitarra 1
+        4: "g2",  # El Audio 4 del Excel corresponde a la Guitarra 2
+        3: "g3",  # El Audio 3 del Excel corresponde a la Guitarra 3
+        2: "g4",  # El Audio 2 del Excel corresponde a la Guitarra 4
+        1: "g5",  # El Audio 1 del Excel corresponde a la Guitarra 5 (Vetusta)
+    }
 
-    print("--- INICIANDO COMPARATIVA ---")
+    # DICCIONARIO_AUDIOS = {
+    #     1: "guitarra 1-415Hzalejandro pieza",
+    #     2: "guitarra 1-415Hzuxia pieza",
+    #     3: "guitarra2-alejandro pieza",
+    #     4: "guitarra2-uxia pieza",
+    #     5: "guitarra3-alejandro pieza",
+    #     6: "guitarra3-uxia pieza",
+    #     7: "guitarra4-alejandro pieza",
+    #     8: "guitarra4-uxia pieza",
+    # }
+
+    generate_radar_guitarras_comparative(
+        RUTA_CSV_PROMEDIOS_NOTAS,
+        RUTA_EXCEL_SUBJ,
+        DICCIONARIO_METRICAS_PROMEDIOS_NOTAS,
+        MAPEO_AUDIO_GUITARRA,
+    )
 
     # Pasamos las variables como argumentos a cada función
     generate_radar_comparative(

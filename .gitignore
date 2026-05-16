@@ -1,4 +1,5 @@
 *.png
 *.csv
 *.tex
-resultados/ 
+resultados/
+pruebas_evol_notes.py 
