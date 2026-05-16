@@ -53,9 +53,7 @@ def generar_radar_chart(csv_path):
 
 
 def main():
-    generar_radar_chart(
-        r"c:\Users\lucib\Desktop\TFG\RESULTADOS\piezas_grabaciones_reducc_ruido_12_marzo\resultados_completos\dataset_guitarras_grabaciones_global.csv"
-    )
+    generar_radar_chart("dataset_guitarras_grabaciones_notas.csv")
 
 
 if __name__ == "__main__":

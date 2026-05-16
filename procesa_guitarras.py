@@ -15,13 +15,13 @@ def main():
     # output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
     # output_latex_global = "tabla_guitarras_grabaciones_global.tex"
 
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas_uxia"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas"
 
-    output_csv_notas = "dataset_guitarras_grabaciones_notas_uxia.csv"
-    output_csv_global = "dataset_guitarras_grabaciones_global_uxia_notas.csv"
+    output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
+    output_csv_global = "dataset_guitarras_grabaciones_global.csv"
 
-    output_latex_notas = "tabla_guitarras_grabaciones_notas_uxia.tex"
-    output_latex_global = "tabla_guitarras_grabaciones_global_uxia_notas.tex"
+    output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
+    output_latex_global = "tabla_guitarras_grabaciones_global.tex"
 
     # __________________________________________________________________________________
 
@@ -49,6 +49,16 @@ def main():
         # preparar metadatos base
         nombre_base = archivo.replace(".wav", "")
         clase_asignada = "Uxía" if "uxia" in archivo.lower() else "Alejandro"
+        archivo_minusculas = archivo.lower()
+
+        if "uxia" in archivo_minusculas:
+            clase_asignada = "Uxía"
+        elif "alejandro" in archivo_minusculas:
+            clase_asignada = "Alejandro"
+        elif "ambos" in archivo_minusculas:
+            clase_asignada = "Ambos"
+        else:
+            clase_asignada = None
 
         # SIEMPRE guardamos los datos globales en el dataset global
         global_entry = global_features.copy()
