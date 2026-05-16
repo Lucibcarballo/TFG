@@ -202,24 +202,23 @@ if __name__ == "__main__":
     generar_grafica_puntos(df_limpio, es_ranking)
     generar_boxplot_global(df_limpio, es_ranking)
 
-    # --- LÓGICA DE EXPORTACIÓN CONDICIONAL ---
+    # para exportar csv comparativo
     if not es_ranking:
         print(
             "\n[INFO]: Encuesta de puntuación (Piezas) detectada. Procesando mapeo de intérpretes..."
         )
 
-        # OJO: Modifica este diccionario con el orden real de quién toca qué audio en las piezas
         MAPEO_PIEZAS = {
             1: "Alejandro",
             2: "Uxía",
             3: "Alejandro",
             4: "Uxía",
-            5: "Uxía",
-            6: "Alejandro",
-            7: "Uxía",
-            8: "Alejandro",
-            9: "Uxía",
-            10: "Alejandro",
+            5: "Alejandro",
+            6: "Uxía",
+            7: "Alejandro",
+            8: "Uxía",
+            9: "Alejandro",
+            10: "Uxía",
         }
 
         exportar_csv(df_limpio, "datos_encuesta_piezas.csv", MAPEO_PIEZAS)
