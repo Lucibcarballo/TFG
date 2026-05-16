@@ -163,12 +163,68 @@ def generar_boxplot_global(df, es_ranking):
     plt.show()
 
 
+def exportar_csv(df_melted, nombre_archivo_salida, mapeo_interpretes):
+    """
+    Cruza los audios con los intérpretes, calcula la media y exporta a CSV.
+    Solo se debe llamar a esta función cuando los audios estén separados.
+    """
+    df_melted = df_melted.copy()  # Hacemos una copia para no alterar el df original
+    df_melted["Intérprete"] = df_melted["Audio_Num"].map(mapeo_interpretes)
+    df_melted = df_melted.dropna(subset=["Intérprete"])
+
+    # Calcular la media por intérprete y parámetro
+    df_agrupado = (
+        df_melted.groupby(["Intérprete", "Parametro"], observed=False)["Puntuacion"]
+        .mean()
+        .reset_index()
+    )
+
+    # Pivotar para que las métricas sean columnas
+    df_pivot = df_agrupado.pivot(
+        index="Intérprete", columns="Parametro", values="Puntuacion"
+    ).reset_index()
+
+    # Guardar CSV
+    df_pivot.to_csv(nombre_archivo_salida, index=False)
+    print(f"[OK] Datos listos para el radar exportados a: {nombre_archivo_salida}")
+
+
 if __name__ == "__main__":
+    # Puedes poner aquí la ruta de cualquiera de los dos Excels.
+    # El código sabrá qué hacer automáticamente.
     RUTA_ARCHIVO = (
-        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
+        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_piezas.xlsx"
     )
 
     df_limpio, es_ranking = preparar_datos(RUTA_ARCHIVO)
 
+    # Las gráficas exploratorias las generamos para ambas encuestas (notas o piezas)
     generar_grafica_puntos(df_limpio, es_ranking)
     generar_boxplot_global(df_limpio, es_ranking)
+
+    # --- LÓGICA DE EXPORTACIÓN CONDICIONAL ---
+    if not es_ranking:
+        print(
+            "\n[INFO]: Encuesta de puntuación (Piezas) detectada. Procesando mapeo de intérpretes..."
+        )
+
+        # OJO: Modifica este diccionario con el orden real de quién toca qué audio en las piezas
+        MAPEO_PIEZAS = {
+            1: "Alejandro",
+            2: "Uxía",
+            3: "Alejandro",
+            4: "Uxía",
+            5: "Uxía",
+            6: "Alejandro",
+            7: "Uxía",
+            8: "Alejandro",
+            9: "Uxía",
+            10: "Alejandro",
+        }
+
+        exportar_csv(df_limpio, "datos_encuesta_piezas.csv", MAPEO_PIEZAS)
+    else:
+        print("\n[INFO]: Encuesta de ranking (Notas) detectada.")
+        print(
+            "[INFO]: Intérpretes mezclados en el mismo audio. Se omite la exportación del CSV comparativo."
+        )
