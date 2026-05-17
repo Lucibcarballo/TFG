@@ -16,7 +16,7 @@ def preparar_datos(ruta_excel):
     # DETECTAMOS QUE TIPO DE ENCUESTA ES
     es_ranking = (
         melted["Valor"].astype(str).str.contains("Audio", case=False, na=False).any()
-    )
+    )  # si alguna celda tiene "Audio X" es que es ranking, si no, es puntuación numérica
 
     melted["Columna"] = melted["Columna"].str.replace(
         "Sustain-", "Sustain -", regex=False
@@ -46,9 +46,9 @@ def preparar_datos(ruta_excel):
         # En Puntuacion: el num audio viene de la columna (ej: "Sustain - Audio 1")
         melted["Audio_Num"] = melted["Subcolumna"].str.extract(r"(\d+)")[0].astype(int)
 
-    # # OJO MAPEAR SEGUN ORDEN AUDIOS ENCUESTA
-    # mapeo_inverso = {5: 1, 4: 2, 3: 3, 2: 4, 1: 5}
-    # melted["Audio_Num"] = melted["Audio_Num"].map(mapeo_inverso)
+    # OJO MAPEAR SEGUN ORDEN AUDIOS ENCUESTA
+    mapeo_inverso = {5: 1, 4: 2, 3: 3, 2: 4, 1: 5}
+    melted["Audio_Num"] = melted["Audio_Num"].map(mapeo_inverso)
 
     # Ordenamos por numero de guitarra
     melted = melted.sort_values(by="Audio_Num")
@@ -102,7 +102,10 @@ def generar_grafica_puntos(df, es_ranking):
     audios_unicos = sorted(df["Audio_Num"].dropna().unique())
     for ax in g.axes.flat:
         ax.set_xticks(range(len(audios_unicos)))
-        ax.set_xticklabels([f"Audio {int(i)}" for i in audios_unicos])
+        # ax.set_xticklabels([f"Audio {int(i)}" for i in audios_unicos])
+
+        etiqueta_eje = "Guitarra" if es_ranking else "Audio"
+        ax.set_xticklabels([f"{etiqueta_eje} {int(i)}" for i in audios_unicos])
 
     titulo = "Evaluación por Ranking" if es_ranking else "Evaluación por Puntuación"
     g.figure.suptitle(
@@ -147,9 +150,10 @@ def generar_boxplot_global(df, es_ranking):
 
     # Ajustamos las etiquetas del eje X para que diga "Audio X" de forma segura
     audios_unicos = sorted(df["Audio_Num"].dropna().unique())
+    etiqueta_eje = "Guitarra" if es_ranking else "Audio"
     plt.xticks(
         ticks=range(len(audios_unicos)),
-        labels=[f"Audio {int(i)}" for i in audios_unicos],
+        labels=[f"{etiqueta_eje} {int(i)}" for i in audios_unicos],
     )
 
     plt.legend(
