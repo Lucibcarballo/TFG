@@ -15,6 +15,22 @@ from mpl_toolkits.mplot3d import Axes3D  # Necesario para proyecciones 3D
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+# Puedes poner esto justo después de tus imports para que afecte a todos los gráficos
+import matplotlib.pyplot as plt
+
+plt.rcParams.update(
+    {
+        "font.size": 14,  # Tamaño general de la fuente
+        "axes.titlesize": 18,  # Tamaño de los títulos de los gráficos
+        "axes.labelsize": 14,  # Tamaño de las etiquetas de los ejes X e Y
+        "xtick.labelsize": 12,  # Tamaño de los números en el eje X
+        "ytick.labelsize": 12,  # Tamaño de los números en el eje Y
+        "legend.fontsize": 12,  # Tamaño de la letra en la leyenda
+        "legend.title_fontsize": 14,  # Tamaño del título de la leyenda
+        "figure.titlesize": 20,  # Tamaño del título general de la figura
+    }
+)
+
 
 def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
     y, fs = sf.read(path)
@@ -486,7 +502,6 @@ def generate_comparative_graphs(
 ):  # recibe el dataframe con las características de todas las notas y genera gráficos comparativos entre clases
 
     sns.set_style("whitegrid")
-    plt.rcParams.update({"font.size": 10})
 
     # Creamos una columna temporal 'Grupo' con el nombre limpio
     df["Grupo"] = df["Archivo"].apply(limpiar_nombre)
