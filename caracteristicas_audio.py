@@ -20,14 +20,13 @@ import matplotlib.pyplot as plt
 
 plt.rcParams.update(
     {
-        "font.size": 14,  # Tamaño general de la fuente
-        "axes.titlesize": 18,  # Tamaño de los títulos de los gráficos
-        "axes.labelsize": 14,  # Tamaño de las etiquetas de los ejes X e Y
-        "xtick.labelsize": 12,  # Tamaño de los números en el eje X
-        "ytick.labelsize": 12,  # Tamaño de los números en el eje Y
-        "legend.fontsize": 12,  # Tamaño de la letra en la leyenda
-        "legend.title_fontsize": 14,  # Tamaño del título de la leyenda
-        "figure.titlesize": 20,  # Tamaño del título general de la figura
+        "font.size": 16,  # Tamaño general
+        "axes.titlesize": 20,  # Títulos de los sub-gráficos
+        "axes.labelsize": 16,  # Etiquetas de los ejes
+        "xtick.labelsize": 16,  # Letras del radar (exterior) y eje X
+        "ytick.labelsize": 16,  # Porcentajes del radar y eje Y
+        "legend.fontsize": 18,  # Leyenda
+        "figure.titlesize": 22,  # Título superior general
     }
 )
 
@@ -954,8 +953,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
         ax.axvline(x=5.5, color="gray", linestyle=":", alpha=0.5)
 
-        # 2. Metemos los nombres justo en ese hueco (Y = -0.14 suele ir perfecto)
-        nombre_1 = interpretes_unicos[0].capitalize()
+        nombre_1 = "Intérprete 1"  # alejandro
         ax.text(
             0.25,
             -0.14,
@@ -969,7 +967,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         )
 
         if len(interpretes_unicos) > 1:
-            nombre_2 = interpretes_unicos[1].capitalize()
+            nombre_2 = "Intérprete 2"  # uxia
             ax.text(
                 0.75,
                 -0.14,

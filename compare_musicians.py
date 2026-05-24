@@ -69,7 +69,7 @@ def main():
         csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_notas.csv",
         clase_columna="Clase",
         es_encuesta=False,
-        titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 uxia, 2 alejandro
+        titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 alejandro, 2 uxia
         archivo_salida="radar_chart_objetivo_notas.png",
     )
 
@@ -77,7 +77,7 @@ def main():
         csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\piezas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv",
         clase_columna="Clase",
         es_encuesta=False,
-        titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 uxia, 2 alejandro
+        titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 alejandro, 2 uxia
         archivo_salida="radar_chart_objetivo_piezas.png",
     )
 
