@@ -48,15 +48,15 @@ def main():
         global_features = caracteristicas_audio.get_global_features(y_full, fs)
         # preparar metadatos base
         nombre_base = archivo.replace(".wav", "")
-        clase_asignada = "Uxía" if "uxia" in archivo.lower() else "Alejandro"
+        clase_asignada = "Intérprete 2" if "uxia" in archivo.lower() else "Intérprete 1"
         archivo_minusculas = archivo.lower()
 
         if "uxia" in archivo_minusculas:
-            clase_asignada = "Uxía"
+            clase_asignada = "Intérprete 2"
         elif "alejandro" in archivo_minusculas:
-            clase_asignada = "Alejandro"
+            clase_asignada = "Intérprete 1"
         elif "ambos" in archivo_minusculas:
-            clase_asignada = "Ambos"
+            clase_asignada = "Ambos intérpretes"
         else:
             clase_asignada = None
 

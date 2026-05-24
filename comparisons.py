@@ -408,7 +408,7 @@ def generate_radar_guitarras_comparative(
                     0.5,
                     0,
                 ),  # al centro (0.5) y bastante por debajo del círculo (-0.2)
-                ncol=2,  # Ponlo en 1 columna (una debajo de otra). Si caben a lo ancho, puedes probar ncol=2
+                ncol=1,
             )
 
             nombre_salida = f"radar_comparativo_guitarra_{num_guitarra}.png"
