@@ -3,6 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
+plt.rcParams.update(
+    {
+        "font.size": 14,  # Tamaño general
+        "axes.titlesize": 16,  # Títulos de los sub-gráficos
+        "axes.labelsize": 16,  # Etiquetas de los ejes
+        "xtick.labelsize": 14,  # Letras del radar (exterior) y eje X
+        "ytick.labelsize": 14,  # Porcentajes del radar y eje Y
+        "legend.fontsize": 14,  # Leyenda
+        "figure.titlesize": 22,  # Título superior general
+    }
+)
+
 
 def generar_radar_chart(
     csv_path,
@@ -13,6 +25,16 @@ def generar_radar_chart(
 ):
     # Cargamos datos del CSV
     df = pd.read_csv(csv_path)
+
+    diccionario_nombres = {
+        "Alejandro": "Intérprete 1",
+        "alejandro": "Intérprete 1",
+        "Uxia": "Intérprete 2",
+        "uxia": "Intérprete 2",
+        "Uxía": "Intérprete 2",
+        "uxía": "Intérprete 2",
+    }
+    df[clase_columna] = df[clase_columna].replace(diccionario_nombres)
 
     # Seleccionar solo columnas numéricas (excluyendo la clase y variables de control del software)
     cols_excluir = ["Archivo", "TNR", "PR", clase_columna]
@@ -47,6 +69,11 @@ def generar_radar_chart(
     ax.set_theta_direction(-1)
     ax.set_thetagrids(np.degrees(angles[:-1]), cols_metrics)
 
+    ax.tick_params(axis="x", pad=15)  # Aumentar el espacio entre etiquetas y gráfico
+
+    ax.set_rlabel_position(0)
+    ax.tick_params(axis="y", labelcolor="gray", labelsize=11)
+
     # LÍMITES DE ESCALA DEPENDIENDO DEL DATO
     if es_encuesta:
         ax.set_ylim(0, 10)
@@ -55,7 +82,7 @@ def generar_radar_chart(
         ax.set_ylim(0, 1)  # El MinMaxScaler deja todo entre 0 y 1
 
     plt.title(titulo, size=15, y=1.1)
-    plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2)
     plt.tight_layout()
 
     plt.savefig(archivo_salida, dpi=300, bbox_inches="tight")
@@ -85,7 +112,7 @@ def main():
         csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\encuestas\\datos_encuesta_piezas.csv",
         clase_columna="Intérprete",
         es_encuesta=True,
-        titulo="Comparativa Encuesta: Uxía vs Alejandro",
+        titulo="Comparativa Encuesta: Intérprete 1 vs Intérprete 2",  # 1 alejandro, 2 uxia
         archivo_salida="radar_chart_subjetivo_piezas.png",
     )
 
