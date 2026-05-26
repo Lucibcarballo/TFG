@@ -527,7 +527,7 @@ def generate_comparative_graphs(
 
     # Configuración de colores
     clases_unicas = df_norm["Clase"].unique()
-    paleta = sns.color_palette("bright", len(clases_unicas))
+    paleta = sns.color_palette("Set2", len(clases_unicas))
     mapa_colores = dict(zip(clases_unicas, paleta))
 
     # _______________________RADAR CHART_______________________
@@ -562,14 +562,14 @@ def generate_comparative_graphs(
         ax.fill(angles, valores, color=color, alpha=0.1)
 
     plt.title(
-        "Radar Chart de características promedio por clase",
+        "Radar Chart de características promedio por intérprete",
         y=1.08,
         fontsize=18,
         fontweight="bold",
     )
     plt.legend(
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.12),
+        bbox_to_anchor=(0.5, -0.15),
         ncol=2,
         fontsize=16,
     )
@@ -899,9 +899,7 @@ def generate_small_multiples_bars(
         ncol=(
             len(labels) if labels else 2
         ),  # Se adapta dinámicamente al número de clases de forma horizontal
-        title="Clase",
-        fontsize=14,
-        title_fontsize=15,
+        fontsize=16,
         frameon=True,  # Le mete un recuadro muy fino de fondo para que destaque limpiamente
     )
 
@@ -910,7 +908,7 @@ def generate_small_multiples_bars(
         top=0.85, hspace=0.45, bottom=0.15
     )  # Damos margen abajo para que quepa la leyenda
     g.fig.suptitle(
-        "Comparativa de características acústicas por grupo\n\n",
+        "Comparativa de características acústicas por guitarra e intérprete\n\n",
         fontsize=18,
         fontweight="bold",
     )
