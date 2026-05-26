@@ -124,6 +124,17 @@ def main():
         df_temp["filename"] = df_temp["filename"].str.replace("notas_", "", regex=False)
         df_temp["filename"] = df_temp["filename"].str.replace("_", "-")
 
+        # Forzamos pasar a minúsculas temporalmente solo para la comprobación y evitar fallos de mayúsculas
+        df_temp["filename"] = df_temp["filename"].str.replace(
+            "alejandro", "Intérprete 1", case=False, regex=False
+        )
+        df_temp["filename"] = df_temp["filename"].str.replace(
+            "uxia", "Intérprete 2", case=False, regex=False
+        )
+        df_temp["filename"] = df_temp["filename"].str.replace(
+            "uxía", "Intérprete 2", case=False, regex=False
+        )
+
         # renombramos para el csv y la tabla LaTeX, graficos usan los nombres originales
         nombres_cortos = {
             "filename": "Archivo",
@@ -139,8 +150,8 @@ def main():
             "loudness": "Loud",
             "sharpness": "Sharp",
             "roughness": "Rough",
-            "tnr": "TNR",
-            "pr": "PR",
+            # "tnr": "TNR",
+            # "pr": "PR",
         }
 
         df_temp.rename(columns=nombres_cortos, inplace=True)

@@ -18,18 +18,6 @@ from sklearn.decomposition import PCA
 # Puedes poner esto justo después de tus imports para que afecte a todos los gráficos
 import matplotlib.pyplot as plt
 
-plt.rcParams.update(
-    {
-        "font.size": 16,  # Tamaño general
-        "axes.titlesize": 20,  # Títulos de los sub-gráficos
-        "axes.labelsize": 16,  # Etiquetas de los ejes
-        "xtick.labelsize": 16,  # Letras del radar (exterior) y eje X
-        "ytick.labelsize": 16,  # Porcentajes del radar y eje Y
-        "legend.fontsize": 18,  # Leyenda
-        "figure.titlesize": 22,  # Título superior general
-    }
-)
-
 
 def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
     y, fs = sf.read(path)
@@ -442,8 +430,8 @@ def get_global_features(y, fs):
         "loudness": mq_data["loudness"]["val"],
         "sharpness": mq_data["sharpness"]["val"],
         "roughness": mq_data["roughness"]["val"],
-        "tnr": mq_data["tonality"]["tnr_global"],
-        "pr": mq_data["tonality"]["pr_global"],
+        # "tnr": mq_data["tonality"]["tnr_global"],
+        # "pr": mq_data["tonality"]["pr_global"],
     }
 
 
@@ -554,7 +542,9 @@ def generate_comparative_graphs(
     ax = plt.subplot(111, polar=True)
     ax.set_theta_offset(pi / 2)
     ax.set_theta_direction(-1)
-    plt.xticks(angles[:-1], categorias)
+
+    plt.xticks(angles[:-1], categorias, size=15)
+    ax.tick_params(axis="y", colors="gray", labelsize=11)  # nums del radar en gris
 
     for i, row in df_radar.iterrows():
         valores = row[cols_numericas].values.flatten().tolist()
@@ -564,15 +554,25 @@ def generate_comparative_graphs(
         ax.plot(
             angles,
             valores,
-            linewidth=2,
+            linewidth=2.5,
             linestyle="solid",
             label=nombre_clase,
             color=color,
         )
         ax.fill(angles, valores, color=color, alpha=0.1)
 
-    plt.title("Radar Chart de características promedio por clase", y=1.08)
-    plt.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+    plt.title(
+        "Radar Chart de características promedio por clase",
+        y=1.08,
+        fontsize=18,
+        fontweight="bold",
+    )
+    plt.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        ncol=2,
+        fontsize=16,
+    )
 
     plt.savefig("radar_chart.png", dpi=300, bbox_inches="tight")
     print("Guardado: radar_chart.png")
@@ -822,7 +822,7 @@ def generate_small_multiples_bars(
         "Numero_Nota",
         "Cuerda",
         "Grupo",
-    ]  # excluimos características nota a nota para centrarnos en las globales por archivo
+    ]
 
     # Identificamos columnas numéricas y filtramos
     cols_numericas = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -838,6 +838,14 @@ def generate_small_multiples_bars(
             df_norm[col] = (df_norm[col] - min_val) / (max_val - min_val)
         else:
             df_norm[col] = 0.0
+
+    def cambio_nombre_guitarra(nombre_grupo):
+        match = re.search(r"g(\d+)", nombre_grupo, re.IGNORECASE)
+        if match:
+            return f"Guitarra {match.group(1)}"
+        return nombre_grupo
+
+    df_norm["Grupo"] = df_norm["Grupo"].apply(cambio_nombre_guitarra)
 
     df_melt = df_norm.melt(
         id_vars=["Grupo", "Clase"],
@@ -855,20 +863,61 @@ def generate_small_multiples_bars(
         hue="Clase",  # distingue colores por clase
         kind="bar",
         col_wrap=3,
-        height=3,
+        height=3.5,
         aspect=1.5,
         palette="Set2",
         sharex=True,
+        legend=True,
     )
 
-    g.set_titles(col_template="{col_name}", size=12, fontweight="bold")
-    g.set_axis_labels("Magnitud normalizada (0-1)", "")
+    g.set_titles(col_template="{col_name}", size=15, fontweight="bold")
+    g.set_axis_labels("Magnitud normalizada (0-1)", "", fontsize=13)
 
-    plt.subplots_adjust(top=0.92)
-    g.fig.suptitle("Comparativa de características acústicas por grupo", fontsize=16)
+    for ax in g.axes.flat:
+        ax.tick_params(axis="y", labelsize=13)  # Nombres de las guitarras más grandes
+        ax.tick_params(axis="x", labelsize=11)  # Números del eje X
+
+    # Forzar la creación de la leyenda abajo usando la figura global
+    handles, labels = g.axes[0].get_legend_handles_labels()
+
+    if not handles and g._legend is not None:
+        handles = g._legend.legend_handles
+        labels = [text.get_text() for text in g._legend.get_texts()]
+
+    if g._legend is not None:
+        g._legend.remove()
+
+    # Dibujamos la nuestra HORIZONTAL, abajo del todo y forzando los elementos capturados
+    g.figure.legend(
+        handles=handles,
+        labels=labels,
+        loc="lower center",
+        bbox_to_anchor=(
+            0.5,
+            -0.02,
+        ),  # Bajamos un pelín la coordenada para que no pise el eje X de abajo
+        ncol=(
+            len(labels) if labels else 2
+        ),  # Se adapta dinámicamente al número de clases de forma horizontal
+        title="Clase",
+        fontsize=14,
+        title_fontsize=15,
+        frameon=True,  # Le mete un recuadro muy fino de fondo para que destaque limpiamente
+    )
+
+    # Espaciado del título con un par de saltos de línea para alejarlo
+    plt.subplots_adjust(
+        top=0.85, hspace=0.45, bottom=0.15
+    )  # Damos margen abajo para que quepa la leyenda
+    g.fig.suptitle(
+        "Comparativa de características acústicas por grupo\n\n",
+        fontsize=18,
+        fontweight="bold",
+    )
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Guardado: {filename}")
+
     plt.close()
 
 
@@ -983,8 +1032,10 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         ax.grid(True, linestyle="--", alpha=0.4)
 
     # hspace a 0.4 para que las filas tengan espacio de sobra para este eje X más alto
-    plt.subplots_adjust(top=0.85, hspace=0.4)
-    g.figure.suptitle("Evolución temporal de características por nota", fontsize=16)
+    plt.subplots_adjust(top=0.85, hspace=0.3)
+    g.figure.suptitle(
+        "Evolución temporal de características por nota", fontsize=16, fontweight="bold"
+    )
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Guardado: {filename}")

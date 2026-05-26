@@ -7,11 +7,13 @@ plt.rcParams.update(
     {
         "font.size": 14,  # Tamaño general
         "axes.titlesize": 16,  # Títulos de los sub-gráficos
+        "axes.titleweight": "bold",
         "axes.labelsize": 16,  # Etiquetas de los ejes
         "xtick.labelsize": 14,  # Letras del radar (exterior) y eje X
         "ytick.labelsize": 14,  # Porcentajes del radar y eje Y
         "legend.fontsize": 14,  # Leyenda
         "figure.titlesize": 22,  # Título superior general
+        "figure.titleweight": "bold",
     }
 )
 
