@@ -91,13 +91,19 @@ def generate_radar_comparative(
             angulos[:-1],
             etiquetas_radar,
             color="black",
-            fontweight="bold",
+            # fontweight="bold",
         )
-        ax.tick_params(axis="x", pad=15)
+        ax.tick_params(axis="x", pad=25)
 
         # Eje Y (0 a 1)
         ax.set_rlabel_position(0)
-        plt.yticks([0.25, 0.5, 0.75, 1.0], ["25%", "50%", "75%", "100%"], color="grey")
+
+        plt.yticks(
+            [0.25, 0.5, 0.75, 1.0],
+            ["25%", "50%", "75%", "100%"],
+            color="grey",
+            fontsize=16,
+        )
         plt.ylim(0, 1.1)
 
         # Extraer y dibujar datos SUBJETIVOS (Encuesta)
@@ -136,7 +142,6 @@ def generate_radar_comparative(
             )
             ax.fill(angulos, valores_obj, color="#4195cc", alpha=0.25)
 
-        # Retoques
         plt.title(
             f"Audio {num_audio} ({nombre_csv}): Objetivo vs Subjetivo",
             y=1.12,
@@ -350,12 +355,16 @@ def generate_radar_guitarras_comparative(
         ax.set_theta_direction(-1)
 
         # Configurar Eje X
-        plt.xticks(angulos[:-1], etiquetas_radar, color="black", fontweight="bold")
-        ax.tick_params(axis="x", pad=15)
+        plt.xticks(angulos[:-1], etiquetas_radar, color="black")
 
         # Configurar Eje Y
         ax.set_rlabel_position(0)
-        plt.yticks([0.25, 0.5, 0.75, 1.0], ["25%", "50%", "75%", "100%"], color="grey")
+        plt.yticks(
+            [0.25, 0.5, 0.75, 1.0],
+            ["25%", "50%", "75%", "100%"],
+            color="grey",
+            fontsize=16,
+        )
         plt.ylim(0, 1.1)
 
         # Dibujar datos SUBJETIVOS (Encuesta)
@@ -421,7 +430,7 @@ if __name__ == "__main__":
 
     # Rutas de los archivos de datos
     RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
-    RUTA_CSV_PROMEDIOS_NOTAS = "dataset_guitarras_promedio_notas.csv"
+    RUTA_CSV_PROMEDIOS_NOTAS = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_promedio_notas.csv"
     RUTA_EXCEL_SUBJ = (
         r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
     )

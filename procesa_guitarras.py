@@ -7,15 +7,7 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
-
-    # output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
-    # output_csv_global = "dataset_guitarras_grabaciones_global.csv"
-
-    # output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
-    # output_latex_global = "tabla_guitarras_grabaciones_global.tex"
-
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas"
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
 
     output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
     output_csv_global = "dataset_guitarras_grabaciones_global.csv"
@@ -23,6 +15,21 @@ def main():
     output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
     output_latex_global = "tabla_guitarras_grabaciones_global.tex"
 
+    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas"
+
+    # output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
+    # output_csv_global = "dataset_guitarras_grabaciones_global.csv"
+
+    # output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
+    # output_latex_global = "tabla_guitarras_grabaciones_global.tex"
+
+    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios"
+
+    # output_csv_notas = "dataset_guitarras_electr_española_notas.csv"
+    # output_csv_global = "dataset_guitarras_electr_española_global.csv"
+
+    # output_latex_notas = "tabla_guitarras_electr_española_notas.tex"
+    # output_latex_global = "tabla_guitarras_electr_española_global.tex"
     # __________________________________________________________________________________
 
     if not os.path.exists(input_folder):
@@ -46,6 +53,7 @@ def main():
 
         # extracción de características resumidas
         global_features = caracteristicas_audio.get_global_features(y_full, fs)
+
         # preparar metadatos base
         nombre_base = archivo.replace(".wav", "")
         clase_asignada = "Intérprete 2" if "uxia" in archivo.lower() else "Intérprete 1"
@@ -59,6 +67,18 @@ def main():
             clase_asignada = "Ambos intérpretes"
         else:
             clase_asignada = None
+
+        # # CAMBIOS
+        # nombre_base = archivo.replace(".wav", "")
+        # archivo_minusculas = archivo.lower()
+
+        # # Nueva clasificación por tipo de guitarra
+        # if "electrica" in archivo_minusculas or "eléctrica" in archivo_minusculas:
+        #     clase_asignada = "Eléctrica"
+        # elif "espanola" in archivo_minusculas or "española" in archivo_minusculas:
+        #     clase_asignada = "Española"
+        # else:
+        #     clase_asignada = "No especificado"
 
         # SIEMPRE guardamos los datos globales en el dataset global
         global_entry = global_features.copy()
@@ -134,6 +154,20 @@ def main():
         df_temp["filename"] = df_temp["filename"].str.replace(
             "uxía", "Intérprete 2", case=False, regex=False
         )
+
+        # # CAMBIOS
+        # df_temp["filename"] = df_temp["filename"].str.replace(
+        #     "electrica", "Eléctrica", case=False, regex=False
+        # )
+        # df_temp["filename"] = df_temp["filename"].str.replace(
+        #     "eléctrica", "Eléctrica", case=False, regex=False
+        # )
+        # df_temp["filename"] = df_temp["filename"].str.replace(
+        #     "espanola", "Española", case=False, regex=False
+        # )
+        # df_temp["filename"] = df_temp["filename"].str.replace(
+        #     "española", "Española", case=False, regex=False
+        # )
 
         # renombramos para el csv y la tabla LaTeX, graficos usan los nombres originales
         nombres_cortos = {

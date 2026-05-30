@@ -202,10 +202,12 @@ def compute_inharmonicity(peaks, f):
         return 0.0  # Si no hay suficientes armónicos, devolvemos 0
 
     Fundamental = fp[0]  # asumimos el primer pico como fundamental
-    armonicos = np.arange(1, Num + 1)
+
+    f_armonicos = fp[1:]  # armónicos reales (excluyendo el fundamental)
+    n = np.arange(2, Num + 1)  # números de armónicos ideales (2, 3, 4, ...)
 
     # Coeficiente B para cada armónico
-    B_vals = ((fp[:Num] / (armonicos * Fundamental)) ** 2 - 1) / (armonicos**2)
+    B_vals = ((f_armonicos / (n * Fundamental)) ** 2 - 1) / (n**2)
 
     # devolvemos la media (un solo número)
     return np.mean(np.abs(B_vals))
@@ -543,8 +545,8 @@ def generate_comparative_graphs(
     ax.set_theta_offset(pi / 2)
     ax.set_theta_direction(-1)
 
-    plt.xticks(angles[:-1], categorias, size=15)
-    ax.tick_params(axis="y", colors="gray", labelsize=11)  # nums del radar en gris
+    plt.xticks(angles[:-1], categorias, size=16)
+    ax.tick_params(axis="y", colors="gray", labelsize=16)  # nums del radar en gris
 
     for i, row in df_radar.iterrows():
         valores = row[cols_numericas].values.flatten().tolist()
@@ -870,12 +872,12 @@ def generate_small_multiples_bars(
         legend=True,
     )
 
-    g.set_titles(col_template="{col_name}", size=15, fontweight="bold")
-    g.set_axis_labels("Magnitud normalizada (0-1)", "", fontsize=13)
+    g.set_titles(col_template="{col_name}", size=16, fontweight="bold")
+    g.set_axis_labels("Magnitud normalizada (0-1)", "", fontsize=16)
 
     for ax in g.axes.flat:
-        ax.tick_params(axis="y", labelsize=13)  # Nombres de las guitarras más grandes
-        ax.tick_params(axis="x", labelsize=11)  # Números del eje X
+        ax.tick_params(axis="y", labelsize=16)  # Nombres de las guitarras
+        ax.tick_params(axis="x", labelsize=16)  # Números del eje X
 
     # Forzar la creación de la leyenda abajo usando la figura global
     handles, labels = g.axes[0].get_legend_handles_labels()
@@ -907,8 +909,14 @@ def generate_small_multiples_bars(
     plt.subplots_adjust(
         top=0.85, hspace=0.45, bottom=0.15
     )  # Damos margen abajo para que quepa la leyenda
-    g.fig.suptitle(
-        "Comparativa de características acústicas por guitarra e intérprete\n\n",
+    # g.figure.suptitle(
+    #     "Comparativa de características acústicas por guitarra e intérprete\n\n",
+    #     fontsize=18,
+    #     fontweight="bold",
+    # )
+
+    g.figure.suptitle(
+        "Comparativa de características acústicas\n\n",
         fontsize=18,
         fontweight="bold",
     )
