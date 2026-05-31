@@ -19,20 +19,44 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 
-def load_audio(path, level_db=None):  # calibra si se proporciona nivel en dB
+def load_audio(path, ref_path=None):  # calibra si se proporciona nivel en dB
+
     y, fs = sf.read(path)
 
     # Si el audio es estereo, convertir a mono
     if y.ndim > 1:
         y = y.mean(axis=1)
 
-    if level_db is not None:  # calibrar
-        gain = 10 ** (level_db / 20)
-        y = y * gain
-        print(f"Audio calibrado a {level_db} dB.")
-    elif y.dtype != np.float32:
-        y = y / np.max(np.abs(y))  # normalizar
-        print("Audio normalizado.")
+    if ref_path is not None:  # calibrar si damos audio de referencia de calibracion
+
+        y_ref, _ = sf.read(ref_path)
+        if y_ref.ndim > 1:
+            y_ref = y_ref.mean(axis=1)
+
+        sonometro = 69.41  # dbs medidos con sonometro
+
+        # Calculamos energías (RMS)
+        rms_ref = np.sqrt(np.mean(y_ref**2))
+        rms_actual = np.sqrt(np.mean(y**2))  # del audio a calibrar
+
+        C = sonometro - 20 * np.log10(
+            max(rms_ref, 1e-10)
+        )  # diferencia entre el nivel medido y el de referencia
+
+        nivel_calibrado = (
+            20 * np.log10(max(rms_actual, 1e-10)) + C
+        )  # nivel del audio a calibrar
+
+        delta_db = sonometro - nivel_calibrado
+        gain = 10 ** (delta_db / 20)
+        y_calibrada = y * gain  # aplicamos ganancia para ajustar al nivel de referencia
+
+        print(f"-> El audio '{path}' original medía: {nivel_calibrado:.2f} dB SPL")
+
+        if np.max(np.abs(y_calibrada)) > 1.0:
+            print("[WARNING] El audio calibrado supera los 0 dB FS (clipping).")
+
+        return y_calibrada, fs
 
     return y, fs
 
