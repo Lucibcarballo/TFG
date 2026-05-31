@@ -47,7 +47,10 @@ def main():
         path_completo = os.path.join(input_folder, archivo)
 
         # normaliza automaticamente el audio
-        y_full, fs = caracteristicas_audio.load_audio(path_completo)
+        y_full, fs = caracteristicas_audio.load_audio(
+            path_completo,
+            ref_path=r"c:\Users\lucib\Desktop\TFG\audio\grabaciones_12marzo\guitarra1\reducc_ruido_12_6_3\guitarra 1_415Hzalejandro ref calibración.wav",
+        )
 
         print(f"Extrayendo características globales de {archivo}...")
 
@@ -123,12 +126,12 @@ def main():
                 f"[{archivo}] No es un archivo de notas. Evaluando solo métricas globales..."
             )
 
-            features = global_features.copy()
+            # features = global_features.copy()
 
-            features["filename"] = nombre_base
-            features["clase"] = clase_asignada
+            # features["filename"] = nombre_base
+            # features["clase"] = clase_asignada
 
-            dataset_global.append(features)
+            # dataset_global.append(features)
 
         print(f"[OK] Procesado: {archivo}")
 
