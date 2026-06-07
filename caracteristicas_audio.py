@@ -824,7 +824,7 @@ def generate_correlation_matrix(df, filename="matriz_correlacion.png"):
         fmt=".2f",
     )
 
-    plt.title("Matriz de correlación de parámetros acústicos", size=15, pad=20)
+    plt.title("Matriz de correlación de parámetros acústicos", size=15, pad=22)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
     plt.tight_layout()
@@ -896,12 +896,12 @@ def generate_small_multiples_bars(
         legend=True,
     )
 
-    g.set_titles(col_template="{col_name}", size=16, fontweight="bold")
-    g.set_axis_labels("Magnitud normalizada (0-1)", "", fontsize=16)
+    g.set_titles(col_template="{col_name}", size=18, fontweight="bold")
+    g.set_axis_labels("Magnitud normalizada (0-1)", "", fontsize=18)
 
     for ax in g.axes.flat:
-        ax.tick_params(axis="y", labelsize=16)  # Nombres de las guitarras
-        ax.tick_params(axis="x", labelsize=16)  # Números del eje X
+        ax.tick_params(axis="y", labelsize=18)  # Nombres de las guitarras
+        ax.tick_params(axis="x", labelsize=18)  # Números del eje X
 
     # Forzar la creación de la leyenda abajo usando la figura global
     handles, labels = g.axes[0].get_legend_handles_labels()
@@ -925,7 +925,7 @@ def generate_small_multiples_bars(
         ncol=(
             len(labels) if labels else 2
         ),  # Se adapta dinámicamente al número de clases de forma horizontal
-        fontsize=16,
+        fontsize=18,
         frameon=True,  # Le mete un recuadro muy fino de fondo para que destaque limpiamente
     )
 
@@ -941,7 +941,7 @@ def generate_small_multiples_bars(
 
     g.figure.suptitle(
         "Comparativa de características acústicas\n\n",
-        fontsize=18,
+        fontsize=20,
         fontweight="bold",
     )
 
@@ -1018,17 +1018,29 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         facet_kws={"sharey": False},
     )
 
-    g.set_titles(col_template="{col_name}", size=12, fontweight="bold")
+    g.set_titles(col_template="{col_name}", size=14, fontweight="bold")
 
     # Lo quitamos del ajuste general para controlarlo nosotros mismos gráfico por gráfico
     g.set_axis_labels("", "Valor")
 
     for ax in g.axes.flat:
         ax.set_xticks(range(1, 11))
-        ax.set_xticklabels([5, 4, 3, 2, 1, 5, 4, 3, 2, 1])
+        # cuerdas al aire
+        etiquetas = [
+            "5\n(La2/La3)",
+            "4\n(Re3/Re4)",
+            "3\n(Sol3)",
+            "2\n(Si3)",
+            "1\n(Mi4)",
+            "5\n(La2/La3)",
+            "4\n(Re3/Re4)",
+            "3\n(Sol3)",
+            "2\n(Si3)",
+            "1\n(Mi4)",
+        ]
+        ax.set_xticklabels(etiquetas)
 
-        # 1. Empujamos el título del eje X hacia abajo (creamos el hueco)
-        ax.set_xlabel("Número de Nota", labelpad=20)
+        ax.set_xlabel("Orden (Nota al aire)", labelpad=22)
 
         ax.axvline(x=5.5, color="gray", linestyle=":", alpha=0.5)
 
@@ -1040,7 +1052,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
             transform=ax.transAxes,
             ha="center",
             va="top",
-            fontsize=10,
+            fontsize=12,
             color="gray",
             fontweight="bold",
         )
@@ -1054,7 +1066,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
                 transform=ax.transAxes,
                 ha="center",
                 va="top",
-                fontsize=10,
+                fontsize=12,
                 color="gray",
                 fontweight="bold",
             )
@@ -1064,7 +1076,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
     # hspace a 0.4 para que las filas tengan espacio de sobra para este eje X más alto
     plt.subplots_adjust(top=0.85, hspace=0.3)
     g.figure.suptitle(
-        "Evolución temporal de características por nota", fontsize=16, fontweight="bold"
+        "Evolución temporal de características por nota", fontsize=18, fontweight="bold"
     )
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
