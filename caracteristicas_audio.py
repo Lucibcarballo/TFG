@@ -1012,7 +1012,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         kind="line",
         palette="Set2",
         col_wrap=2,  # num graficos por fila
-        height=3,
+        height=3.5,
         aspect=1.5,
         marker="o",
         facet_kws={"sharey": False},
@@ -1047,7 +1047,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         nombre_1 = "Intérprete 1"  # alejandro
         ax.text(
             0.25,
-            -0.14,
+            1.08,
             nombre_1,
             transform=ax.transAxes,
             ha="center",
@@ -1061,11 +1061,11 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
             nombre_2 = "Intérprete 2"  # uxia
             ax.text(
                 0.75,
-                -0.14,
+                1.08,
                 nombre_2,
                 transform=ax.transAxes,
                 ha="center",
-                va="top",
+                va="bottom",
                 fontsize=12,
                 color="gray",
                 fontweight="bold",
@@ -1074,7 +1074,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         ax.grid(True, linestyle="--", alpha=0.4)
 
     # hspace a 0.4 para que las filas tengan espacio de sobra para este eje X más alto
-    plt.subplots_adjust(top=0.85, hspace=0.3)
+    plt.subplots_adjust(top=0.92, hspace=0.55)
     g.figure.suptitle(
         "Evolución temporal de características por nota", fontsize=18, fontweight="bold"
     )

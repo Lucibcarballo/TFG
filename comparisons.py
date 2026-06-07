@@ -10,13 +10,13 @@ from evaluation_graphics import preparar_datos
 
 plt.rcParams.update(
     {
-        "font.size": 16,  # Tamaño general
-        "axes.titlesize": 20,  # Títulos de los sub-gráficos
-        "axes.labelsize": 16,  # Etiquetas de los ejes
-        "xtick.labelsize": 16,  # Letras del radar (exterior) y eje X
-        "ytick.labelsize": 16,  # Porcentajes del radar y eje Y
-        "legend.fontsize": 18,  # Leyenda
-        "figure.titlesize": 22,  # Título superior general
+        "font.size": 18,  # Tamaño general
+        "axes.titlesize": 22,  # Títulos de los sub-gráficos
+        "axes.labelsize": 18,  # Etiquetas de los ejes
+        "xtick.labelsize": 18,  # Letras del radar (exterior) y eje X
+        "ytick.labelsize": 18,  # Porcentajes del radar y eje Y
+        "legend.fontsize": 20,  # Leyenda
+        "figure.titlesize": 24,  # Título superior general
     }
 )
 
@@ -82,7 +82,7 @@ def generate_radar_comparative(
     angulos += angulos[:1]
 
     for num_audio, nombre_csv in diccionario_audios.items():
-        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "polar"})
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"projection": "polar"})
         ax.set_theta_offset(pi / 2)
         ax.set_theta_direction(-1)
 
@@ -93,7 +93,7 @@ def generate_radar_comparative(
             color="black",
             # fontweight="bold",
         )
-        ax.tick_params(axis="x", pad=25)
+        ax.tick_params(axis="x", pad=35)
 
         # Eje Y (0 a 1)
         ax.set_rlabel_position(0)
@@ -350,12 +350,15 @@ def generate_radar_guitarras_comparative(
     guitarras_unicas = medias_obj["Guitarra"].unique()
 
     for guitarra in guitarras_unicas:
-        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"projection": "polar"})
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"projection": "polar"})
         ax.set_theta_offset(pi / 2)
         ax.set_theta_direction(-1)
 
         # Configurar Eje X
         plt.xticks(angulos[:-1], etiquetas_radar, color="black")
+        
+        ax.tick_params(axis="x", pad=15)
+
 
         # Configurar Eje Y
         ax.set_rlabel_position(0)
@@ -407,7 +410,7 @@ def generate_radar_guitarras_comparative(
 
             plt.title(
                 f"Guitarra {num_guitarra}: Comparativa objetivo-subjetiva",
-                y=1.12,
+                y=1.15,
                 fontweight="bold",
             )
 
@@ -429,8 +432,8 @@ def generate_radar_guitarras_comparative(
 if __name__ == "__main__":
 
     # Rutas de los archivos de datos
-    RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv"
-    RUTA_CSV_PROMEDIOS_NOTAS = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_promedio_notas.csv"
+    RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_grabaciones_global.csv"
+    RUTA_CSV_PROMEDIOS_NOTAS = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_promedio_notas.csv"
     RUTA_EXCEL_SUBJ = (
         r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
     )

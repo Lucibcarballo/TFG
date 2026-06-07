@@ -3,19 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
+
 plt.rcParams.update(
     {
-        "font.size": 14,  # Tamaño general
-        "axes.titlesize": 16,  # Títulos de los sub-gráficos
-        "axes.titleweight": "bold",
-        "axes.labelsize": 16,  # Etiquetas de los ejes
-        "xtick.labelsize": 14,  # Letras del radar (exterior) y eje X
-        "ytick.labelsize": 14,  # Porcentajes del radar y eje Y
-        "legend.fontsize": 14,  # Leyenda
-        "figure.titlesize": 22,  # Título superior general
+        "font.size": 18,  # Tamaño general
+        "axes.titlesize": 22,  # Títulos de los sub-gráficos
+        "axes.labelsize": 18,  # Etiquetas de los ejes
+        "xtick.labelsize": 18,  # Letras del radar (exterior) y eje X
+        "ytick.labelsize": 18,  # Porcentajes del radar y eje Y
+        "legend.fontsize": 20,  # Leyenda
+        "figure.titlesize": 24,  # Título superior general
         "figure.titleweight": "bold",
+        "axes.titleweight": "bold",
+
+
     }
 )
+
 
 
 def generar_radar_chart(
@@ -58,7 +62,7 @@ def generar_radar_chart(
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
     angles += angles[:1]  # Cerrar el círculo
 
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
 
     for i, row in df_mean.iterrows():
         values = row[cols_metrics].values.flatten().tolist()
@@ -71,10 +75,10 @@ def generar_radar_chart(
     ax.set_theta_direction(-1)
     ax.set_thetagrids(np.degrees(angles[:-1]), cols_metrics)
 
-    ax.tick_params(axis="x", pad=15)  # Aumentar el espacio entre etiquetas y gráfico
+    ax.tick_params(axis="x", pad=14)  # Aumentar el espacio entre etiquetas y gráfico
 
     ax.set_rlabel_position(0)
-    ax.tick_params(axis="y", labelcolor="gray", labelsize=11)
+    ax.tick_params(axis="y", labelcolor="gray", labelsize=16)
 
     # LÍMITES DE ESCALA DEPENDIENDO DEL DATO
     if es_encuesta:
@@ -83,7 +87,7 @@ def generar_radar_chart(
     else:
         ax.set_ylim(0, 1)  # El MinMaxScaler deja todo entre 0 y 1
 
-    plt.title(titulo, size=15, y=1.1)
+    plt.title(titulo, size=18, y=1.1)
     plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2)
     plt.tight_layout()
 
@@ -95,7 +99,7 @@ def generar_radar_chart(
 
 def main():
     generar_radar_chart(
-        csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_notas.csv",
+        csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_grabaciones_notas.csv",
         clase_columna="Clase",
         es_encuesta=False,
         titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 alejandro, 2 uxia
@@ -103,7 +107,7 @@ def main():
     )
 
     generar_radar_chart(
-        csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\piezas_grabaciones_reducc_ruido_12_marzo\\resultados_completos\\dataset_guitarras_grabaciones_global.csv",
+        csv_path="c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\piezas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_grabaciones_global.csv",
         clase_columna="Clase",
         es_encuesta=False,
         titulo="Comparativa Software: Intérprete 1 vs Intérprete 2",  # 1 alejandro, 2 uxia

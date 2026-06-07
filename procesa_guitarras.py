@@ -7,21 +7,21 @@ import caracteristicas_audio
 
 def main():
     # _____________________OJO: AJUSTAR configuración de rutas_________________________
-    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
-
-    output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
-    output_csv_global = "dataset_guitarras_grabaciones_global.csv"
-
-    output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
-    output_latex_global = "tabla_guitarras_grabaciones_global.tex"
-
-    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas"
+    # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\docs\piezas"
 
     # output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
     # output_csv_global = "dataset_guitarras_grabaciones_global.csv"
 
     # output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
     # output_latex_global = "tabla_guitarras_grabaciones_global.tex"
+
+    input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios\notas"
+
+    output_csv_notas = "dataset_guitarras_grabaciones_notas.csv"
+    output_csv_global = "dataset_guitarras_grabaciones_global.csv"
+
+    output_latex_notas = "tabla_guitarras_grabaciones_notas.tex"
+    output_latex_global = "tabla_guitarras_grabaciones_global.tex"
 
     # input_folder = r"C:\Users\lucib\Desktop\TFG\codigo\audios"
 
@@ -254,11 +254,11 @@ def main():
         print(f"[OK] CSV de promedios guardado: {output_csv_promedio_notas}")
         print(f"[OK] Tabla LaTeX de promedios guardada: {output_latex_promedio_notas}")
 
-    print("\n--- Generando gráficos ---")
-    caracteristicas_audio.generate_comparative_graphs(df_global)
-    caracteristicas_audio.generate_small_multiples_bars(
-        df_global, filename="small_multiples.png"
-    )
+    # print("\n--- Generando gráficos ---")
+    # caracteristicas_audio.generate_comparative_graphs(df_global)
+    # caracteristicas_audio.generate_small_multiples_bars(
+    #     df_global, filename="small_multiples.png"
+    # )
 
     if not df_notas.empty:
         caracteristicas_audio.graph_notes(df_notas, filename="evolution_notes.png")
