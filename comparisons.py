@@ -30,29 +30,28 @@ def generate_radar_comparative(
 
     print("Audios encontrados en el Excel:", df_subj["Audio_Num"].unique())
 
-    # Filtramos solo los parámetros que hemos mapeado
-    df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())]
+    # Filtramos solo los parámetros que hemos mapeado y forzamos copia limpia
+    df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())].copy()
 
-    # Calculamos la media de puntuación por Audio y Parámetro
-    medias_subj = (
-        df_subj.groupby(["Audio_Num", "Parametro"])["Puntuacion"].mean().reset_index()
-    )
-
-    # Normalizamos (0 a 1).
+    # Normalizar e invertir FILA por FILA primero
     if es_ranking:
-        print("Los datos subjetivos son RANKING. ")
+        print("Los datos subjetivos son RANKING. Invirtiendo a nivel de fila...")
         max_rank = df_subj["Puntuacion"].max()
         denom = (max_rank - 1) if max_rank > 1 else 1
-        medias_subj["Valor_Norm"] = 1 - ((medias_subj["Puntuacion"] - 1) / denom)
+        df_subj["Valor_Norm"] = 1.0 - ((df_subj["Puntuacion"] - 1.0) / denom)
     else:
-        medias_subj["Valor_Norm"] = medias_subj["Puntuacion"] / 10.0
+        df_subj["Valor_Norm"] = df_subj["Puntuacion"] / 10.0
+        
+    # Ahora sí, agrupamos de forma única extrayendo la media del Valor_Norm corregido
+    medias_subj = (
+        df_subj.groupby(["Audio_Num", "Parametro"])["Valor_Norm"].mean().reset_index()
+    )
 
     # --- PREPARAR DATOS OBJETIVOS (CSV) ---
     print("Procesando datos objetivos para Radar Chart...")
     df_obj = pd.read_csv(ruta_csv_obj)
     df_obj["Archivo"] = df_obj["Archivo"].str.strip()
 
-    # Usamos set() para evitar columnas duplicadas al agrupar
     columnas_obj_necesarias = list(set(diccionario_metricas.values()))
     medias_obj = df_obj.groupby("Archivo")[columnas_obj_necesarias].mean().reset_index()
 
@@ -77,7 +76,6 @@ def generate_radar_comparative(
     ]
 
     N = len(categorias_subj)
-
     angulos = [n / float(N) * 2 * pi for n in range(N)]
     angulos += angulos[:1]
 
@@ -86,18 +84,10 @@ def generate_radar_comparative(
         ax.set_theta_offset(pi / 2)
         ax.set_theta_direction(-1)
 
-        # Eje X (Nombres de la encuesta + Nombre Objetivo)
-        plt.xticks(
-            angulos[:-1],
-            etiquetas_radar,
-            color="black",
-            # fontweight="bold",
-        )
+        plt.xticks(angulos[:-1], etiquetas_radar, color="black")
         ax.tick_params(axis="x", pad=35)
 
-        # Eje Y (0 a 1)
         ax.set_rlabel_position(0)
-
         plt.yticks(
             [0.25, 0.5, 0.75, 1.0],
             ["25%", "50%", "75%", "100%"],
@@ -106,10 +96,8 @@ def generate_radar_comparative(
         )
         plt.ylim(0, 1.1)
 
-        # Extraer y dibujar datos SUBJETIVOS (Encuesta)
         datos_subj_audio = medias_subj[medias_subj["Audio_Num"] == num_audio]
         if not datos_subj_audio.empty:
-            # Aseguramos el orden correcto
             datos_subj_audio = datos_subj_audio.set_index("Parametro").reindex(
                 categorias_subj
             )
@@ -126,7 +114,6 @@ def generate_radar_comparative(
             )
             ax.fill(angulos, valores_subj, color="#e74c3c", alpha=0.1)
 
-        # Extraer y dibujar datos OBJETIVOS (Código)
         datos_obj_audio = medias_obj[medias_obj["Archivo"] == nombre_csv]
         if not datos_obj_audio.empty:
             valores_obj = datos_obj_audio[categorias_obj].values.flatten().tolist()
@@ -150,11 +137,8 @@ def generate_radar_comparative(
 
         plt.legend(
             loc="upper center",
-            bbox_to_anchor=(
-                0.5,
-                0,
-            ),  # al centro (0.5) y bastante por debajo del círculo (-0.2)
-            ncol=2,  # Ponlo en 1 columna (una debajo de otra). Si caben a lo ancho, puedes probar ncol=2
+            bbox_to_anchor=(0.5, 0),
+            ncol=2,
         )
 
         nombre_salida = f"radar_comparativo_audio_{num_audio}.png"
@@ -166,47 +150,35 @@ def generate_radar_comparative(
 def generate_points_comparative(
     ruta_csv_obj, ruta_excel_subj, diccionario_metricas, diccionario_audios
 ):
-    # 1. PREPARAR DATOS SUBJETIVOS (Oyentes)
     print("Procesando datos subjetivos para Gráfica de Puntos...")
     df_subj, es_ranking = preparar_datos(ruta_excel_subj)
 
-    # 2. PREPARAR DATOS OBJETIVOS (Script)
     print("Procesando datos objetivos para Gráfica de Puntos...")
     df_obj = pd.read_csv(ruta_csv_obj)
     df_obj["Archivo"] = df_obj["Archivo"].str.strip()
     columnas_obj = list(set(diccionario_metricas.values()))
 
-    # Agrupamos por Archivo
     medias_obj = df_obj.groupby("Archivo")[columnas_obj].mean().reset_index()
 
-    # Asignamos el Audio_Num correspondiente (1, 2, 3...) invirtiendo diccionario_audios
     map_inv_audios = {v: k for k, v in diccionario_audios.items()}
     medias_obj["Audio_Num"] = medias_obj["Archivo"].map(map_inv_audios)
     medias_obj = medias_obj.dropna(subset=["Audio_Num"]).sort_values("Audio_Num")
 
-    # Normalizamos el dato objetivo para que encaje en el eje Y de la gráfica
-    # Convertimos el dato objetivo en Ranking o lo Normalizamos
     for col in columnas_obj:
         if es_ranking:
-            # Convertimos los valores acústicos en posiciones (1º, 2º, 3º, 4º, 5º)
-            # ascending=False significa que el valor acústico MÁS ALTO se lleva el PUESTO 1.
-            # method='min' hace que si dos audios tienen EXACTAMENTE el mismo valor, compartan puesto.
             medias_obj[col + "_escalado"] = medias_obj[col].rank(
                 ascending=False, method="min"
             )
         else:
-            # Si en la encuesta en vez de ranking disteis puntuaciones (0 a 10),
-            # normalizamos proporcionalmente como hacíamos antes:
             max_val = medias_obj[col].max()
             min_val = medias_obj[col].min()
             rango = max_val - min_val
-
             norm_01 = (medias_obj[col] - min_val) / rango if rango != 0 else 0.5
             medias_obj[col + "_escalado"] = norm_01 * 10
 
     print("Generando Gráfica de Puntos superpuesta...")
     sns.set_theme(style="whitegrid", font_scale=1.2)
-    g = sns.catplot(  # puntos encuesta
+    g = sns.catplot(
         data=df_subj,
         x="Audio_Num",
         y="Puntuacion",
@@ -237,11 +209,8 @@ def generate_points_comparative(
         ax.set_xticks(range(len(audios_unicos)))
         ax.set_xticklabels([f"Audio {int(i)}" for i in audios_unicos])
 
-        # Verificamos si este parámetro tiene una equivalencia acústica en el diccionario
         if parametro_subj in diccionario_metricas:
             col_obj = diccionario_metricas[parametro_subj]
-
-            # Coordenadas: Seaborn posiciona las categorías en X=0, 1, 2, 3...
             x_coords = medias_obj["Audio_Num"] - 1
             y_coords = medias_obj[col_obj + "_escalado"]
 
@@ -249,7 +218,7 @@ def generate_points_comparative(
                 x_coords,
                 y_coords,
                 color="red",
-                marker="s",  # s = square
+                marker="s",
                 markersize=8,
                 linestyle="",
                 markerfacecolor="none",
@@ -257,11 +226,8 @@ def generate_points_comparative(
                 markeredgewidth=1.5,
                 zorder=10,
             )
-
-            # Cambiamos el título para mostrar la comparativa exacta
             ax.set_title(f"{parametro_subj}\nvs {col_obj}", weight="bold")
         else:
-            # Si no hay equivalencia objetiva (ej. Sustain), dejamos solo el nombre limpio
             ax.set_title(f"{parametro_subj}", weight="bold")
 
     cuadrado = mlines.Line2D(
@@ -271,13 +237,12 @@ def generate_points_comparative(
         marker="s",
         linestyle="",
         markersize=10,
-        markerfacecolor="none",  # INTERIOR TRANSPARENTE
+        markerfacecolor="none",
         markeredgecolor="red",
         markeredgewidth=1.5,
         label="Análisis objetivo",
     )
     g.figure.legend(handles=[cuadrado], loc="lower center", bbox_to_anchor=(0.5, -0.05))
-
     g.figure.suptitle("Comparativa objetivo-subjetiva", y=1.05, weight="bold")
 
     plt.savefig("grafico_mixto_overlay.png", dpi=300, bbox_inches="tight")
@@ -288,45 +253,34 @@ def generate_points_comparative(
 def generate_radar_guitarras_comparative(
     ruta_csv_obj, ruta_excel_subj, diccionario_metricas, mapeo_audio_guitarra
 ):
-    # preparamos datos de encuesta (ranking o puntuación) y asignamos a qué guitarra corresponde cada audio
     print("Procesando datos subjetivos por Guitarra...")
     df_subj, es_ranking = preparar_datos(ruta_excel_subj)
 
-    # Filtramos solo los parámetros que hemos mapeado
-    df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())]
-
-    # Asignamos a qué guitarra pertenece cada número de audio de la encuesta
+    # Forzamos una copia explícita para evitar warnings de Pandas al modificar columnas
+    df_subj = df_subj[df_subj["Parametro"].isin(diccionario_metricas.keys())].copy()
     df_subj["Guitarra"] = df_subj["Audio_Num"].map(mapeo_audio_guitarra)
-    df_subj = df_subj.dropna(subset=["Guitarra"])
+    df_subj = df_subj.dropna(subset=["Guitarra"]).copy()
 
-    # Calculamos la media de puntuación agrupando por guitarra y característica
+    # Normalización e inversión individual limpia antes del agrupamiento definitivo
+    if es_ranking:
+        max_rank_subj = df_subj["Puntuacion"].max()
+        denom_subj = (max_rank_subj - 1) if max_rank_subj > 1 else 1
+        df_subj["Valor_Norm"] = 1.0 - ((df_subj["Puntuacion"] - 1.0) / denom_subj)
+    else:
+        df_subj["Valor_Norm"] = df_subj["Puntuacion"] / 10.0
+        
+    # Ahora creamos el medias_subj definitivo directamente sobre la columna ya tratada
     medias_subj = (
-        df_subj.groupby(["Guitarra", "Parametro"])["Puntuacion"].mean().reset_index()
+        df_subj.groupby(["Guitarra", "Parametro"])["Valor_Norm"].mean().reset_index()
     )
 
-    # Normalizamos la encuesta (0 a 1)
-    if es_ranking:
-        max_rank_subj = df_subj[
-            "Puntuacion"
-        ].max()  # para detectar los 5 puestos y ajustar el divisor
-        denom_subj = (max_rank_subj - 1) if max_rank_subj > 1 else 1
-        medias_subj["Valor_Norm"] = 1 - ((medias_subj["Puntuacion"] - 1) / denom_subj)
-    else:
-        medias_subj["Valor_Norm"] = medias_subj["Puntuacion"] / 10.0
-
-    # datos objetivos (software)
     print("Procesando datos objetivos por Guitarra convirtiendo a RANKING...")
     df_obj = pd.read_csv(ruta_csv_obj)
     df_obj["Guitarra"] = df_obj["Guitarra"].str.strip()
 
     columnas_obj_necesarias = list(set(diccionario_metricas.values()))
+    medias_obj = df_obj.groupby("Guitarra")[columnas_obj_necesarias].mean().reset_index()
 
-    # Agrupamos por guitarra antes de rankear para que compitan entre ellas
-    medias_obj = (
-        df_obj.groupby("Guitarra")[columnas_obj_necesarias].mean().reset_index()
-    )
-
-    # Detecta que hay 5 guitarras y ajusta el divisor
     num_guitarras_obj = len(medias_obj)
     denom_obj = (num_guitarras_obj - 1) if num_guitarras_obj > 1 else 1
 
@@ -334,7 +288,6 @@ def generate_radar_guitarras_comparative(
         puestos_fisicos = medias_obj[col].rank(ascending=False, method="min")
         medias_obj[col] = 1 - ((puestos_fisicos - 1) / denom_obj)
 
-    # --- GENERAR RADAR CHART POR CADA GUITARRA ---
     print("Generando Radar Charts comparativos de Guitarras...")
 
     categorias_subj = list(diccionario_metricas.keys())
@@ -354,13 +307,9 @@ def generate_radar_guitarras_comparative(
         ax.set_theta_offset(pi / 2)
         ax.set_theta_direction(-1)
 
-        # Configurar Eje X
         plt.xticks(angulos[:-1], etiquetas_radar, color="black")
-        
         ax.tick_params(axis="x", pad=15)
 
-
-        # Configurar Eje Y
         ax.set_rlabel_position(0)
         plt.yticks(
             [0.25, 0.5, 0.75, 1.0],
@@ -370,7 +319,6 @@ def generate_radar_guitarras_comparative(
         )
         plt.ylim(0, 1.1)
 
-        # Dibujar datos SUBJETIVOS (Encuesta)
         datos_subj_guit = medias_subj[medias_subj["Guitarra"] == guitarra]
         if not datos_subj_guit.empty:
             datos_subj_guit = datos_subj_guit.set_index("Parametro").reindex(
@@ -389,7 +337,6 @@ def generate_radar_guitarras_comparative(
             )
             ax.fill(angulos, valores_subj, color="#e74c3c", alpha=0.1)
 
-        # Dibujar datos OBJETIVOS (Código Promedios)
         datos_obj_guit = medias_obj[medias_obj["Guitarra"] == guitarra]
         if not datos_obj_guit.empty:
             valores_obj = datos_obj_guit[categorias_obj].values.flatten().tolist()
@@ -401,11 +348,10 @@ def generate_radar_guitarras_comparative(
                 linewidth=2.5,
                 linestyle="solid",
                 label="Análisis objetivo (Promedio Notas)",
-                color="#2ecc71",  # Color verde para diferenciar
+                color="#2ecc71",
             )
             ax.fill(angulos, valores_obj, color="#2ecc71", alpha=0.25)
 
-            # Extraemos solo el número eliminando la 'g' (ej: "g1" -> "1")
             num_guitarra = guitarra.lower().replace("g", "")
 
             plt.title(
@@ -416,10 +362,7 @@ def generate_radar_guitarras_comparative(
 
             plt.legend(
                 loc="upper center",
-                bbox_to_anchor=(
-                    0.5,
-                    0,
-                ),  # al centro (0.5) y bastante por debajo del círculo (-0.2)
+                bbox_to_anchor=(0.5, 0),
                 ncol=1,
             )
 
@@ -430,15 +373,10 @@ def generate_radar_guitarras_comparative(
 
 
 if __name__ == "__main__":
-
-    # Rutas de los archivos de datos
     RUTA_CSV_OBJ = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_grabaciones_global.csv"
     RUTA_CSV_PROMEDIOS_NOTAS = "c:\\Users\\lucib\\Desktop\\TFG\\RESULTADOS\\notas_grabaciones_reducc_ruido_12_marzo\\resultados_completos_con_calibracion\\dataset_guitarras_promedio_notas.csv"
-    RUTA_EXCEL_SUBJ = (
-        r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
-    )
-
-    # Mapeo de Parámetro Subjetivo (Encuesta) -> Parámetro Objetivo (Código/CSV)
+    RUTA_EXCEL_SUBJ = r"C:\Users\lucib\Desktop\TFG\RESULTADOS\encuestas\Encuesta_notas.xlsx"
+    
     DICCIONARIO_METRICAS = {
         "Brillantez": "Brillo (Global)",
         "Proyección": "Loud",
@@ -447,16 +385,12 @@ if __name__ == "__main__":
         "Equilibrio": "L/M (Global)",
     }
 
-    # Diccionario corregido sin claves repetidas para los promedios de notas
     DICCIONARIO_METRICAS_PROMEDIOS_NOTAS = {
         "Brillantez": "Brillo (Nota)",
         "Sustain": "Sus(s)",
         "Equilibrio": "L/M (Nota)",
-        # "Claridad": "Dec(s)",
-        # "Equilibrio": "Atk(s)",  # pq ataque y L/M estan en orden similar
     }
 
-    # Mapeo del Número de Audio de la encuesta -> Nombre del archivo acústico en el CSV
     DICCIONARIO_AUDIOS = {
         1: "g5-ambos",
         2: "g4-ambos",
@@ -465,12 +399,12 @@ if __name__ == "__main__":
         5: "g1-ambos",
     }
 
-    MAPEO_AUDIO_GUITARRA = {  # audio excel -> guitarra real
-        5: "g1",
-        4: "g2",
+    MAPEO_AUDIO_GUITARRA = {   # se hace el mapeo inverso en evaluation_graphics.py
+        1: "g1",                    
+        2: "g2",
         3: "g3",
-        2: "g4",
-        1: "g5",
+        4: "g4",
+        5: "g5",
     }
 
     generate_radar_guitarras_comparative(
