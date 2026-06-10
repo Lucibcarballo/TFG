@@ -187,6 +187,8 @@ def main():
             "loudness": "Loud",
             "sharpness": "Sharp",
             "roughness": "Rough",
+            "centroid_note_nota": "Centroide (Nota)",
+            "centroid_global": "Centroide (Global)",
             # "tnr": "TNR",
             # "pr": "PR",
         }
@@ -232,6 +234,7 @@ def main():
             "Inharm",
             "Brillo (Nota)",
             "L/M (Nota)",
+            "Centroide (Nota)",
         ]
         cols_existentes = [
             c for c in cols_notas_individuales if c in df_promedios.columns
@@ -254,11 +257,11 @@ def main():
         print(f"[OK] CSV de promedios guardado: {output_csv_promedio_notas}")
         print(f"[OK] Tabla LaTeX de promedios guardada: {output_latex_promedio_notas}")
 
-    # print("\n--- Generando gráficos ---")
-    # caracteristicas_audio.generate_comparative_graphs(df_global)
-    # caracteristicas_audio.generate_small_multiples_bars(
-    #     df_global, filename="small_multiples.png"
-    # )
+    print("\n--- Generando gráficos ---")
+    caracteristicas_audio.generate_comparative_graphs(df_global)
+    caracteristicas_audio.generate_small_multiples_bars(
+        df_global, filename="small_multiples.png"
+    )
 
     if not df_notas.empty:
         caracteristicas_audio.graph_notes(df_notas, filename="evolution_notes.png")

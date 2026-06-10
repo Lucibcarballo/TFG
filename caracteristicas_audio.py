@@ -388,6 +388,8 @@ def get_note_features(y, fs):
     freqs, mag = compute_FFT(y, fs)
     energy_spectrum = mag**2  # energia es proportional al cuadrado de la magnitud
 
+    centroide_nota = np.mean(librosa.feature.spectral_centroid(y=y, sr=fs))
+
     # brillantez nota a nota
     picos = spec["peaks"]
 
@@ -436,6 +438,7 @@ def get_note_features(y, fs):
         "inharmonicity": inharm,
         "brillantez": brillo_nota,
         "low_mid_ratio": low_mid_nota,
+        "centroid_note": centroide_nota,
     }
 
 
@@ -449,6 +452,8 @@ def get_global_features(y, fs):
 
     # Análisis psicoacústico con Mosqito
     mq_data = compute_mosqito_data(y, fs)
+    
+    centroide_global = np.mean(librosa.feature.spectral_centroid(y=y, sr=fs))
 
     return {
         "brillantez_global": brillo_global,
@@ -458,6 +463,7 @@ def get_global_features(y, fs):
         "roughness": mq_data["roughness"]["val"],
         # "tnr": mq_data["tonality"]["tnr_global"],
         # "pr": mq_data["tonality"]["pr_global"],
+        "centroid_global": centroide_global,
     }
 
 
@@ -526,6 +532,7 @@ def generate_comparative_graphs(
         "Inharm",
         "Brillo (Nota)",
         "L/M (Nota)",
+        "Centroide (Nota)",
         "Numero_Nota",
         "Cuerda",
     ]  # excluimos características nota a nota para centrarnos en las globales por archivo
@@ -845,6 +852,7 @@ def generate_small_multiples_bars(
         "Inharm",
         "Brillo (Nota)",
         "L/M (Nota)",
+        "Centroide (Nota)",
         "Numero_Nota",
         "Cuerda",
         "Grupo",
@@ -982,8 +990,8 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         axis=1,
     )
 
-    cols_notas = ["Atk(s)", "Dec(s)", "Sus(s)", "Inharm", "Brillo (Nota)", "L/M (Nota)"]
-
+    cols_notas = ["Atk(s)", "Dec(s)", "Sus(s)", "Brillo (Nota)", "L/M (Nota)", "Centroide (Nota)"]
+    
     # Verificar que las columnas existan por si acaso
     cols_graficar = [c for c in cols_notas if c in df_notas.columns]
 
@@ -1027,16 +1035,16 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         ax.set_xticks(range(1, 11))
         # cuerdas al aire
         etiquetas = [
-            "5\n(La2/La3)",
-            "4\n(Re3/Re4)",
-            "3\n(Sol3)",
-            "2\n(Si3)",
-            "1\n(Mi4)",
-            "5\n(La2/La3)",
-            "4\n(Re3/Re4)",
-            "3\n(Sol3)",
-            "2\n(Si3)",
-            "1\n(Mi4)",
+            "5",
+            "4",
+            "3",
+            "2",
+            "1",
+            "5",
+            "4",
+            "3",
+            "2",
+            "1",
         ]
         ax.set_xticklabels(etiquetas)
 
@@ -1047,7 +1055,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
         nombre_1 = "Intérprete 1"  # alejandro
         ax.text(
             0.25,
-            1.08,
+            -0.14,
             nombre_1,
             transform=ax.transAxes,
             ha="center",
@@ -1061,11 +1069,11 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
             nombre_2 = "Intérprete 2"  # uxia
             ax.text(
                 0.75,
-                1.08,
+                -0.14,
                 nombre_2,
                 transform=ax.transAxes,
                 ha="center",
-                va="bottom",
+                va="top",
                 fontsize=12,
                 color="gray",
                 fontweight="bold",
@@ -1073,8 +1081,7 @@ def graph_notes(df, filename="graficos_evolucion_notas.png"):
 
         ax.grid(True, linestyle="--", alpha=0.4)
 
-    # hspace a 0.4 para que las filas tengan espacio de sobra para este eje X más alto
-    plt.subplots_adjust(top=0.92, hspace=0.55)
+    plt.subplots_adjust(top=0.88, hspace=0.55)
     g.figure.suptitle(
         "Evolución temporal de características por nota", fontsize=18, fontweight="bold"
     )
